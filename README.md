@@ -3,7 +3,7 @@ A study of networking patterns over TCP & UDP, with implementations in Go
 
 ## The zguide
 
-Much of this study is inspired by the ZeroMQ ['zguide'](http://zguide.zeromq.org/page:all).
+Much of this study is inspired by the ZeroMQ '[zguide](http://zguide.zeromq.org/page:all)'.
 
 Here's a list of the more relevant sections from the guide containing code samples:
 
