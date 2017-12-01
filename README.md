@@ -46,5 +46,7 @@ Here's a list of the more relevant sections from the guide containing code sampl
 1. [Designing the API](http://zguide.zeromq.org/page:all#Designing-the-API)
 1. [Dealing with Blocked Peers](http://zguide.zeromq.org/page:all#Dealing-with-Blocked-Peers)
 
+*I implemented many of the examples above (in C++) as a learning exercise. Although my implementations are 'experimental' in nature and therefore quite *raw*, some of them do resolve issues that I found when trying to run the 'official' examples. Also, each example is self-contained i.e. no external dependencies besides ZeroMQ itself. This should make it easier to understand the code, in contrast with the examples in the zguide which use a collection of opaque helper functions.*
 
+*You can find my zguide examples [here](https://github.com/richardmillen/zguide-examples).*
 
