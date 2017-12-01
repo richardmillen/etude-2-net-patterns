@@ -7,6 +7,19 @@ Much of this study is inspired by the ZeroMQ '[zguide](http://zguide.zeromq.org/
 
 Here's a list of the more relevant sections from the guide containing code samples:
 
+1. [Ask and Ye Shall Receive](http://zguide.zeromq.org/page:all#Ask-and-Ye-Shall-Receive)
+1. [Getting the Message Out](http://zguide.zeromq.org/page:all#Getting-the-Message-Out)
+1. [Divide and Conquer](http://zguide.zeromq.org/page:all#Divide-and-Conquer)
+1. [Handling Multiple Sockets](http://zguide.zeromq.org/page:all#Handling-Multiple-Sockets)
+1. [Shared Queue (DEALER and ROUTER sockets)](http://zguide.zeromq.org/page:all#Shared-Queue-DEALER-and-ROUTER-sockets)
+1. [ZeroMQ's Built-In Proxy Function](http://zguide.zeromq.org/page:all#ZeroMQ-s-Built-In-Proxy-Function)
+1. [Transport Bridging](http://zguide.zeromq.org/page:all#Transport-Bridging)
+1. [Handling Errors and ETERM](http://zguide.zeromq.org/page:all#Handling-Errors-and-ETERM)
+1. [Handling Interrupt Signals](http://zguide.zeromq.org/page:all#Handling-Interrupt-Signals)
+1. [Multithreading with ZeroMQ](http://zguide.zeromq.org/page:all#Multithreading-with-ZeroMQ)
+1. [Signaling Between Threads](http://zguide.zeromq.org/page:all#Signaling-Between-Threads-PAIR-Sockets)
+1. [Node Coordination](http://zguide.zeromq.org/page:all#Node-Coordination)
+1. [Zero-Copy](http://zguide.zeromq.org/page:all#Zero-Copy)
 1. [Pub-Sub Message Envelopes](http://zguide.zeromq.org/page:all#Pub-Sub-Message-Envelopes)
 1. [Identities and Addresses](http://zguide.zeromq.org/page:all#Identities-and-Addresses)
 1. [ROUTER Broker and REQ Workers](http://zguide.zeromq.org/page:all#ROUTER-Broker-and-REQ-Workers)
