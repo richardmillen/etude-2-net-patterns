@@ -20,23 +20,6 @@ const (
 
 var port = flag.Int("port", 5678, "Port number to listen on")
 
-var dictionary = []struct {
-	english string
-	french  string
-	spanish string
-}{
-	{
-		english: "hello",
-		french:  "bonjour",
-		spanish: "hola",
-	},
-	{
-		english: "goodbye",
-		french:  "aurevoir",
-		spanish: "adios",
-	},
-}
-
 func init() {
 	rand.Seed(time.Now().Unix())
 }
