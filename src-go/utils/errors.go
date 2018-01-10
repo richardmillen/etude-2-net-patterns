@@ -10,3 +10,12 @@ func CheckError(err error) {
 		log.Fatal(err)
 	}
 }
+
+// LogIfError writes to log and returns true if an error is provided.
+func LogIfError(err error) bool {
+	if err != nil {
+		log.Println(err)
+		return true
+	}
+	return false
+}

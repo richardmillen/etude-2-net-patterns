@@ -3,6 +3,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net"
 
@@ -17,8 +18,9 @@ const (
 )
 
 var server = flag.String("server", "localhost", "Name of machine running word publisher")
+var port = flag.Int("port", 5678, "Port number to connect to")
 var filter = flag.String("lang", "eng", "Language to subscribe to (English='eng', French='fra', Spanish='esp')")
-var countDown = flag.Int("countdown", 100, "The number of words to wait for")
+var wordCount = flag.Int("wordcount", 100, "The number of words to get")
 
 func init() {
 	log.SetPrefix("word-sub: ")
@@ -27,18 +29,19 @@ func init() {
 func main() {
 	flag.Parse()
 
-	conn, err := connect(*server)
+	conn, err := connect(*server, *port)
 	utils.CheckError(err)
 
 	sub := pattern.NewSubscriber(conn)
 
 	log.Printf("Subscribing to '%s' words...\n", *filter)
 	finished := make(chan bool)
+	n := 0
 
 	err = sub.Subscribe(func(b []byte) {
 		log.Printf("%s ", string(b))
 
-		if *countDown--; *countDown == 1 {
+		if n++; n == *wordCount {
 			finished <- true
 		}
 	}, *filter)
@@ -47,8 +50,8 @@ func main() {
 	<-finished
 }
 
-func connect(server string) (net.Conn, error) {
-	addr, err := net.ResolveTCPAddr("tcp", server)
+func connect(server string, port int) (net.Conn, error) {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", server, port))
 	if err != nil {
 		return nil, err
 	}
