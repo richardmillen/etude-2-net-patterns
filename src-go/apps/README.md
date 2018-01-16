@@ -2,11 +2,11 @@
 
 This folder contains example apps that demonstrate the patterns explored by this study.
 
-## Random Word Publisher
+## (Random) Word Pub-Sub
 
-+ `weather-server`
-+ `weather-proxy` *(LVC)*
-+ `weather-client`
++ `word-pub`
++ `word-lvc` *(proxy)*
++ `word-sub`
 
 ## Logging / Tracing Example
 

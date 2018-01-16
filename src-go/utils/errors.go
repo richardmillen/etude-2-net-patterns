@@ -11,8 +11,8 @@ func CheckError(err error) {
 	}
 }
 
-// LogIfError writes to log and returns true if an error is provided.
-func LogIfError(err error) bool {
+// LogError returns true if an error was logged.
+func LogError(err error) bool {
 	if err != nil {
 		log.Println(err)
 		return true

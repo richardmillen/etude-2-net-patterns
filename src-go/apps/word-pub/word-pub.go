@@ -8,7 +8,7 @@ import (
 	"net"
 	"time"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/pattern"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/pattern/pubsub"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/utils"
 )
 
@@ -32,7 +32,7 @@ func main() {
 	utils.CheckError(err)
 	defer listener.Close()
 
-	pub := pattern.NewPublisher(listener)
+	pub := pubsub.NewPublisher(listener)
 	defer pub.Close()
 
 	for {

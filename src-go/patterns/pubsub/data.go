@@ -1,6 +1,6 @@
 package pubsub
 
-type message struct {
+type data struct {
 	topic string
 	body  []byte
 }
