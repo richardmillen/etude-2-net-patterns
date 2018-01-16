@@ -30,16 +30,17 @@ func main() {
 
 	listener, err := net.ListenTCP("tcp", addr)
 	utils.CheckError(err)
+	defer listener.Close()
 
 	pub := pattern.NewPublisher(listener)
 	defer pub.Close()
 
 	for {
-		pub.Publish(next())
+		pub.Publish(nextWord())
 	}
 }
 
-func next() (filter string, word []byte) {
+func nextWord() (filter string, word []byte) {
 	words := dictionary[rand.Intn(len(dictionary))]
 
 	switch rand.Intn(3) {
