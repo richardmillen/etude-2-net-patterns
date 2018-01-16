@@ -1,5 +1,89 @@
 # Étude 2 - Networking Patterns
-A study of networking patterns over TCP & UDP, with implementations in Go
+
+A study of networking patterns over TCP & UDP, with implementations in Go & C++.
+
+## Pub-Sub
+
+> Publisher sends a stream of messages.  
+> Subscriber receives messages related to one, or more topics.  
+
++ REQ-REP subscriber sync
++ Topic envelope / frame
++ Last-value caching (LVC)
++ high water mark (HWM)
++ timestamps; abort threshold / latency
+
+## Broker
+
++ message:
+  - proto-sig
+  - service name
+  - logical address
+  - properties
+  - correlation id
+  - frames / body
++ load balance (queue)
++ interconnect; peering
++ failover; clone
++ no workers available?
+  - ignore client requests
+  - notify requesting client
+  - forward to another broker
++ error code response
++ high water mark
++ timestamps; abort threshold
++ assertions
++ transport bridging
++ heartbeats *(broker-to-worker & worker-to-broker)*
+  - liveness
+  - exponential backoff *(to max)*
++ ping-pong *(client-to-server)*
+  - TTL 6 secs
++ support for downtime
+  - upgrades
+  - server crash
++ management
+  - name service
+  - service discovery
++ retries
++ environments; dev, test, prod etc.
++ async; batch send
+
+*n.b. can interconnect & failover be the same i.e. peer broker becomes clone during downtime?*
+
+## Disconnected / Offline Service
+
+> Receives client requests meant for another service via the Broker.   
+> Acts on the clients behalf, calling the service at the appropriate time.  
+> Provides results to client upon request.
+
+## Parallel Pipeline
+
++ ventilator
++ workers
++ sink
++ vent == broker *(?)*
++ sink == client *(akin to GFS chunk servers)*
+
+### Pipelining
+
++ credit-based *(async)* flow control
++ e.g. large files
++ compression
++ encryption
++ interruption; resume after disconnect
+
+## Service Presence
+
+### UDP beacons
+
++ message
+  - header: "FOO1"
+  - body: service TCP port
+
+## P2P / Decentralised
+
+> TODO: add notes.
 
 ## The zguide
 
