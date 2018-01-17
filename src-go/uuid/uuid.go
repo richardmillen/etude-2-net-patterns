@@ -1,4 +1,4 @@
-package utils
+package uuid
 
 import (
 	"crypto/rand"
@@ -7,7 +7,7 @@ import (
 	"log"
 )
 
-// NewUUID generates a random UUID according to RFC4122
+// New generates a random UUID according to RFC4122
 //
 // see sections 4.1.1 & 4.1.3 for lines 74 & 75 respectively.
 //
@@ -19,7 +19,7 @@ import (
 // returning the error because:
 // a) the returned error pollutes the interface
 // b) if an error occurs then there's something fundamentally wrong
-func NewUUID() string {
+func New() string {
 	uuid := make([]byte, 16)
 	_, err := io.ReadFull(rand.Reader, uuid)
 	if err != nil {

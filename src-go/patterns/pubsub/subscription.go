@@ -1,17 +1,18 @@
 package pubsub
 
 import (
+	"fmt"
 	"net"
 	"strings"
 	"sync"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/utils"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
 
 // newSubscription constructs a new subscription (publisher-side connection).
-func newSubscription(conn net.Conn, quit chan bool, wg *sync.WaitGroup) *subscription {
+func newSubscription(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup) *subscription {
 	s := &subscription{conn: conn, quit: quit, wg: wg}
-	s.ch = make(chan data, 1)
+	s.ch = make(chan data, queueSize)
 	go s.enable()
 	return s
 }
@@ -37,17 +38,21 @@ func (sub *subscription) enable() {
 				break
 			}
 
-			err := sub.proto.send(d.topic, d.body)
-			if utils.LogError(err) {
+			err := sub.proto.sendTo(sub, d.topic, d.content)
+			if check.Log(err) {
 				return
 			}
-			break
 		case <-sub.quit:
 			return
 		}
 	}
 }
 
-func (sub *subscription) receive(d data) {
-	sub.ch <- d
+func (sub *subscription) send(d data) error {
+	select {
+	case sub.ch <- d:
+		return nil
+	default:
+		return fmt.Errorf("subscription '%s' queue full", sub.id)
+	}
 }

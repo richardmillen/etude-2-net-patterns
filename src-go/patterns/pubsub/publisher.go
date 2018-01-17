@@ -1,15 +1,24 @@
 package pubsub
 
 import (
+	"errors"
 	"log"
 	"net"
+
+	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+)
+
+const (
+	pubQueueSize     = 2
+	defaultQueueSize = 10
 )
 
 // NewPublisher returns a new Publisher that will publish messages to Subscriber's.
+// TODO: figure out good way to set queue size without cluttering the API.
 func NewPublisher(lnr net.Listener) *Publisher {
-	pub := &Publisher{lnr: newListener(lnr)}
+	pub := &Publisher{lnr: newListener(lnr, defaultQueueSize)}
 
-	pub.ch = make(chan data, 1)
+	pub.ch = make(chan data, pubQueueSize)
 	pub.quit = make(chan bool)
 
 	go pub.run()
@@ -23,6 +32,8 @@ type Publisher struct {
 	quit chan bool
 }
 
+// run is the engine of the Publisher.
+// TODO: should we report subscription queue errors to the consumer?
 func (pub *Publisher) run() {
 	defer log.Println("publisher done.")
 
@@ -30,23 +41,34 @@ func (pub *Publisher) run() {
 		select {
 		case <-pub.quit:
 			return
-		case m := <-pub.ch:
+		case d := <-pub.ch:
 			subs := pub.lnr.getSubscriptions()
-			for _, s := range subs {
-				s.receive(m)
+			for _, sub := range subs {
+				err := sub.send(d)
+				check.Log(err)
 			}
-			break
 		}
 	}
 }
 
+// QueueSize returns the number of items that can be stored
+// in each subscription queue.
+func (pub *Publisher) QueueSize() uint {
+	return pub.lnr.queueSize
+}
+
 // Publish sends data to subscribers.
-func (pub *Publisher) Publish(topic string, body []byte) {
-	pub.ch <- data{topic: topic, body: body}
+func (pub *Publisher) Publish(topic string, content []byte) error {
+	select {
+	case pub.ch <- data{topic: topic, content: content}:
+		return nil
+	default:
+		return errors.New("publisher queue full")
+	}
 }
 
 // Close closes and invalidates the Publisher.
 func (pub *Publisher) Close() error {
-	close(pub.quit)
+	pub.quit <- true
 	return nil
 }

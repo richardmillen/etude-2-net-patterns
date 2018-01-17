@@ -5,12 +5,13 @@ import (
 	"net"
 	"sync"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/utils"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
 
 // newListener constructs a new listener for a Publisher.
-func newListener(l net.Listener) *listener {
+func newListener(l net.Listener, queueSize uint) *listener {
 	lnr := &listener{inner: l}
+	lnr.queueSize = queueSize
 	lnr.subs = make(map[string]*subscription)
 	lnr.quit = make(chan bool)
 	lnr.proto = &protoV1{}
@@ -21,12 +22,13 @@ func newListener(l net.Listener) *listener {
 
 // listener manages publisher-side connections.
 type listener struct {
-	inner net.Listener
-	proto protocol
-	subs  map[string]*subscription
-	m     sync.Mutex
-	quit  chan bool
-	wg    sync.WaitGroup
+	inner     net.Listener
+	proto     protocol
+	queueSize uint
+	subs      map[string]*subscription
+	m         sync.Mutex
+	quit      chan bool
+	wg        sync.WaitGroup
 }
 
 func (lnr *listener) listen() {
@@ -35,14 +37,14 @@ func (lnr *listener) listen() {
 	for {
 		conn, err := lnr.inner.Accept()
 		// TODO: check the error to see if we've been closed!
-		utils.CheckError(err)
+		check.Error(err)
 
 		go func() {
 			lnr.wg.Add(1)
-			sub := newSubscription(conn, lnr.quit, &(lnr.wg))
+			sub := newSubscription(conn, lnr.queueSize, lnr.quit, &(lnr.wg))
 
 			err = lnr.proto.greet(sub)
-			if utils.LogError(err) {
+			if check.Log(err) {
 				return
 			}
 

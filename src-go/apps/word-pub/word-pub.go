@@ -8,8 +8,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/pattern/pubsub"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/utils"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub"
 )
 
 const (
@@ -26,10 +26,10 @@ func init() {
 
 func main() {
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", *port))
-	utils.CheckError(err)
+	check.Error(err)
 
 	listener, err := net.ListenTCP("tcp", addr)
-	utils.CheckError(err)
+	check.Error(err)
 	defer listener.Close()
 
 	pub := pubsub.NewPublisher(listener)
