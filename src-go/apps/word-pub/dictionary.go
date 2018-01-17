@@ -1,5 +1,6 @@
 package main
 
+// dictionary contains words to be published.
 var dictionary = []struct {
 	english string
 	french  string

@@ -12,9 +12,9 @@ import (
 func newListener(l net.Listener, queueSize uint) *listener {
 	lnr := &listener{inner: l}
 	lnr.queueSize = queueSize
-	lnr.subs = make(map[string]*subscription)
+	lnr.qs = make(map[string]*queue)
 	lnr.quit = make(chan bool)
-	lnr.proto = &protoV1{}
+	lnr.proto = &pubProtoV1{}
 
 	go lnr.listen()
 	return lnr
@@ -23,9 +23,9 @@ func newListener(l net.Listener, queueSize uint) *listener {
 // listener manages publisher-side connections.
 type listener struct {
 	inner     net.Listener
-	proto     protocol
+	proto     PubProtocol
 	queueSize uint
-	subs      map[string]*subscription
+	qs        map[string]*queue
 	m         sync.Mutex
 	quit      chan bool
 	wg        sync.WaitGroup
@@ -41,33 +41,33 @@ func (lnr *listener) listen() {
 
 		go func() {
 			lnr.wg.Add(1)
-			sub := newSubscription(conn, lnr.queueSize, lnr.quit, &(lnr.wg))
+			q := newQueue(conn, lnr.queueSize, lnr.quit, &(lnr.wg))
 
-			err = lnr.proto.greet(sub)
+			err = lnr.proto.Greet(q)
 			if check.Log(err) {
 				return
 			}
 
 			lnr.m.Lock()
-			lnr.subs[sub.id] = sub
+			lnr.qs[q.id] = q
 			lnr.m.Unlock()
 		}()
 	}
 }
 
-func (lnr *listener) getSubscriptions() []*subscription {
+func (lnr *listener) getQueues() []*queue {
 	lnr.m.Lock()
 
-	subs := make([]*subscription, len(lnr.subs))
+	qs := make([]*queue, len(lnr.qs))
 	n := 0
-	for _, r := range lnr.subs {
-		subs[n] = r
+	for _, r := range lnr.qs {
+		qs[n] = r
 		n++
 	}
 
 	lnr.m.Unlock()
 
-	return subs
+	return qs
 }
 
 func (lnr *listener) Close() error {

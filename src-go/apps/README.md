@@ -12,6 +12,11 @@ The basic idea is that a Publisher sends out a bunch of random words one after t
 
 If the Proxy is used then Subscribers should subscribe to that instead of the Publisher directly. The Proxy maintains a cache of the last value it receives for each topic (language) which is immediately sent to new Subscribers, rather than them having to wait for a new message on their chosen topic.
 
+### To Do
+
+1. publisher should validate subscriber id's before adding them to the map.
+1. subscriber api enables multiple subscriptions which isn't properly supported.
+
 ## Logging / Tracing Example
 
 + `log-server`

@@ -6,19 +6,17 @@ import (
 	"net"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub/internal"
 )
 
-const (
-	pubQueueSize     = 2
-	defaultQueueSize = 10
-)
+const outQueueSize = 10
 
 // NewPublisher returns a new Publisher that will publish messages to Subscriber's.
 // TODO: figure out good way to set queue size without cluttering the API.
 func NewPublisher(lnr net.Listener) *Publisher {
-	pub := &Publisher{lnr: newListener(lnr, defaultQueueSize)}
+	pub := &Publisher{lnr: newListener(lnr, outQueueSize)}
 
-	pub.ch = make(chan data, pubQueueSize)
+	pub.ch = make(chan internal.Msg, 1)
 	pub.quit = make(chan bool)
 
 	go pub.run()
@@ -28,7 +26,7 @@ func NewPublisher(lnr net.Listener) *Publisher {
 // Publisher sends messages to zero or more Subscriber's.
 type Publisher struct {
 	lnr  *listener
-	ch   chan data
+	ch   chan internal.Msg
 	quit chan bool
 }
 
@@ -42,9 +40,9 @@ func (pub *Publisher) run() {
 		case <-pub.quit:
 			return
 		case d := <-pub.ch:
-			subs := pub.lnr.getSubscriptions()
-			for _, sub := range subs {
-				err := sub.send(d)
+			qs := pub.lnr.getQueues()
+			for _, q := range qs {
+				err := q.send(d)
 				check.Log(err)
 			}
 		}
@@ -60,7 +58,7 @@ func (pub *Publisher) QueueSize() uint {
 // Publish sends data to subscribers.
 func (pub *Publisher) Publish(topic string, content []byte) error {
 	select {
-	case pub.ch <- data{topic: topic, content: content}:
+	case pub.ch <- internal.Msg{Topic: topic, Body: content}:
 		return nil
 	default:
 		return errors.New("publisher queue full")
