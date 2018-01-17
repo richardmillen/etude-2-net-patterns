@@ -1,14 +1,24 @@
 # Networking Patterns - Go Example Apps
 
-This folder contains example apps that demonstrate the patterns explored by this study.
+This folder contains example apps that demonstrate the patterns explored in this study.
 
 ## (Random) Word Pub-Sub
 
-+ `word-pub`
++ `word-pub` *(publisher)*
 + `word-lvc` *(proxy)*
-+ `word-sub`
++ `word-sub` *(subscriber)*
+
+The basic idea is that a Publisher sends out a bunch of random words one after the other, but they're in a few different languages (English, French & Spanish). A Subscriber can subscribe to one of those languages. In Pub-Sub parlance, these languages are called topics.
+
+If the Proxy is used then Subscribers should subscribe to that instead of the Publisher directly. The Proxy maintains a cache of the last value it receives for each topic (language) which is immediately sent to new Subscribers, rather than them having to wait for a new message on their chosen topic.
 
 ## Logging / Tracing Example
+
++ `log-server`
++ `log-forwarder` *(store & forward)*
++ `log-client`
+
+use cases:
 
 + store & forward
 + errors
@@ -16,13 +26,6 @@ This folder contains example apps that demonstrate the patterns explored by this
 + postmortems
 + audit trail
 + monitor conjestion
-
----
-
-+ `log-server`
-+ `log-forwarder` *(store & forward)*
-+ `log-client`
-
 
 
 
