@@ -36,7 +36,7 @@ A study of networking patterns over TCP & UDP, with implementations in Go & C++.
 + transport bridging
 + heartbeats *(broker-to-worker & worker-to-broker)*
   - liveness
-  - exponential backoff *(to max)*
+  - exponential backoff *(to a max)*
 + ping-pong *(client-to-server)*
   - TTL 6 secs
 + support for downtime
