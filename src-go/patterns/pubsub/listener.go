@@ -77,5 +77,6 @@ func (lnr *listener) Close() error {
 		log.Println("listener closed.")
 	}()
 
+	close(lnr.quit)
 	return lnr.inner.Close()
 }

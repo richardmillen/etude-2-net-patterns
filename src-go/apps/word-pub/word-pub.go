@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	filterEnglish = "eng"
-	filterFrench  = "fra"
-	filterSpanish = "esp"
+	topicEnglish = "eng"
+	topicFrench  = "fra"
+	topicSpanish = "esp"
 )
 
-var port = flag.Int("port", 5678, "Port number to listen on")
+var port = flag.Int("port", 5678, "Port number to listen at")
 
 func init() {
 	rand.Seed(time.Now().Unix())
@@ -40,18 +40,18 @@ func main() {
 	}
 }
 
-func nextWord() (filter string, word []byte) {
+func nextWord() (topic string, word []byte) {
 	words := dictionary[rand.Intn(len(dictionary))]
 
 	switch rand.Intn(3) {
 	case 0:
-		filter = filterEnglish
+		topic = topicEnglish
 		word = []byte(words.english)
 	case 1:
-		filter = filterFrench
+		topic = topicFrench
 		word = []byte(words.french)
 	case 2:
-		filter = filterSpanish
+		topic = topicSpanish
 		word = []byte(words.spanish)
 	}
 	return

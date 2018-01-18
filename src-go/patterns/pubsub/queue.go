@@ -53,6 +53,8 @@ func (q *Queue) run() {
 
 	for {
 		select {
+		case <-q.quit:
+			return
 		case m := <-q.ch:
 			if !q.subscribing(m.Topic) {
 				break
@@ -62,8 +64,6 @@ func (q *Queue) run() {
 			if check.Log(err) {
 				return
 			}
-		case <-q.quit:
-			return
 		}
 	}
 }
@@ -72,9 +72,9 @@ func (q *Queue) subscribing(topic string) bool {
 	return strings.HasPrefix(topic, q.topic)
 }
 
-func (q *Queue) send(m Message) error {
+func (q *Queue) send(m *Message) error {
 	select {
-	case q.ch <- m:
+	case q.ch <- *m:
 		return nil
 	default:
 		return fmt.Errorf("subscription queue '%s' is full", q.id)

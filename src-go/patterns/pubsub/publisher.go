@@ -38,20 +38,14 @@ func (pub *Publisher) run() {
 		select {
 		case <-pub.quit:
 			return
-		case d := <-pub.ch:
+		case m := <-pub.ch:
 			qs := pub.lnr.getQueues()
 			for _, q := range qs {
-				err := q.send(d)
+				err := q.send(&m)
 				check.Log(err)
 			}
 		}
 	}
-}
-
-// QueueSize returns the number of items that can be stored
-// in each subscription queue.
-func (pub *Publisher) QueueSize() uint {
-	return pub.lnr.queueSize
 }
 
 // Publish sends data to subscribers.
