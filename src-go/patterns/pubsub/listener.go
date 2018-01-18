@@ -12,7 +12,7 @@ import (
 func newListener(l net.Listener, queueSize uint) *listener {
 	lnr := &listener{inner: l}
 	lnr.queueSize = queueSize
-	lnr.qs = make(map[string]*Queue)
+	lnr.queues = make(map[string]*Queue)
 	lnr.quit = make(chan bool)
 	lnr.proto = &pubProtoV1{}
 
@@ -25,7 +25,7 @@ type listener struct {
 	inner     net.Listener
 	proto     PubProtocol
 	queueSize uint
-	qs        map[string]*Queue
+	queues    map[string]*Queue
 	m         sync.Mutex
 	quit      chan bool
 	wg        sync.WaitGroup
@@ -49,7 +49,7 @@ func (lnr *listener) listen() {
 			}
 
 			lnr.m.Lock()
-			lnr.qs[q.id] = q
+			lnr.queues[q.id] = q
 			lnr.m.Unlock()
 		}()
 	}
@@ -58,11 +58,15 @@ func (lnr *listener) listen() {
 func (lnr *listener) getQueues() []*Queue {
 	lnr.m.Lock()
 
-	qs := make([]*Queue, len(lnr.qs))
-	n := 0
-	for _, r := range lnr.qs {
-		qs[n] = r
-		n++
+	qs := make([]*Queue, 0, len(lnr.queues))
+	for _, q := range lnr.queues {
+		select {
+		case e := <-q.err:
+			log.Printf("error reported by queue '%s': %s\n", q.id, e)
+			delete(lnr.queues, q.id)
+		default:
+			qs = append(qs, q)
+		}
 	}
 
 	lnr.m.Unlock()

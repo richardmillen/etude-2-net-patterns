@@ -85,7 +85,10 @@ func (sub *Subscriber) Subscribe(connFunc ConnectFunc, subFunc SubscribeFunc, to
 // Close is called to close any open connections to a Publisher.
 func (sub *Subscriber) Close() (err error) {
 	if sub.conn != nil {
-		sub.quit <- true
+		select {
+		case sub.quit <- true:
+		default:
+		}
 
 		err = sub.conn.Close()
 		sub.conn = nil

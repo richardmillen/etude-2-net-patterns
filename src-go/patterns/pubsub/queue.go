@@ -14,6 +14,7 @@ import (
 func newQueue(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup) *Queue {
 	q := &Queue{conn: conn, quit: quit, wg: wg}
 	q.ch = make(chan Message, queueSize)
+	q.err = make(chan error)
 	go q.run()
 	return q
 }
@@ -25,8 +26,10 @@ type Queue struct {
 	id    string
 	topic string
 	ch    chan Message
+	err   chan error
 	quit  chan bool
 	wg    *sync.WaitGroup
+	m     sync.Mutex
 }
 
 // Conn returns a ReadWriteCloser that represents the connection to the Subscriber.
@@ -62,6 +65,7 @@ func (q *Queue) run() {
 
 			err := q.proto.Send(q.conn, &m)
 			if check.Log(err) {
+				q.err <- err
 				return
 			}
 		}

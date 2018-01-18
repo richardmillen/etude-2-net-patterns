@@ -21,15 +21,15 @@ const (
 )
 
 const (
-	subIDTemplate = "<addr>:word-sub:<pid>"
-	subIDFormat   = "%s:word-sub:%d"
+	subIDTemplate = "<addr>/word-sub/<pid>"
+	subIDFormat   = "%s/word-sub/%d"
 )
 
-var subID = flag.String("id", subIDTemplate, "Identifier to be used by the subscriber")
+var subID = flag.String("id", subIDTemplate, "Identifier to be used by the subscriber (no colons!)")
 var server = flag.String("server", "localhost", "Name of machine running word publisher")
 var port = flag.Int("port", 5678, "Port number to connect to")
 var topic = flag.String("lang", "eng", "Language to subscribe to (English='eng', French='fra', Spanish='esp')")
-var wordCount = flag.Int("wordcount", 10, "The number of words to get")
+var wordCount = flag.Int("wordcount", 50, "The number of words to get")
 
 func init() {
 	log.SetPrefix("word-sub: ")
