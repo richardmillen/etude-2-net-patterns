@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub/internal"
 )
 
 const outQueueSize = 10
@@ -16,7 +15,7 @@ const outQueueSize = 10
 func NewPublisher(lnr net.Listener) *Publisher {
 	pub := &Publisher{lnr: newListener(lnr, outQueueSize)}
 
-	pub.ch = make(chan internal.Msg, 1)
+	pub.ch = make(chan Message, 1)
 	pub.quit = make(chan bool)
 
 	go pub.run()
@@ -26,7 +25,7 @@ func NewPublisher(lnr net.Listener) *Publisher {
 // Publisher sends messages to zero or more Subscriber's.
 type Publisher struct {
 	lnr  *listener
-	ch   chan internal.Msg
+	ch   chan Message
 	quit chan bool
 }
 
@@ -58,7 +57,7 @@ func (pub *Publisher) QueueSize() uint {
 // Publish sends data to subscribers.
 func (pub *Publisher) Publish(topic string, content []byte) error {
 	select {
-	case pub.ch <- internal.Msg{Topic: topic, Body: content}:
+	case pub.ch <- Message{Topic: topic, Body: content}:
 		return nil
 	default:
 		return errors.New("publisher queue full")

@@ -44,14 +44,14 @@ func main() {
 	finished := make(chan bool)
 	n := 0
 
-	check.Must(sub.Subscribe(connect, func(topic string, b []byte) error {
-		log.Printf("%s ", string(b))
+	check.Must(sub.Subscribe(connect, func(m *pubsub.Message) (err error) {
+		log.Printf("%s: %s\n", m.Topic, string(m.Body))
 
 		if n++; n == *wordCount {
 			finished <- true
 		}
 
-		return nil
+		return
 	}, *topic))
 
 	// we have nothing else to do but wait...

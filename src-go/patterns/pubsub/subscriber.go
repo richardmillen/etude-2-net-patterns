@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub/internal"
 )
 
 const inQueueSize = 10
@@ -16,13 +15,13 @@ const inQueueSize = 10
 type ConnectFunc = func() (io.ReadWriteCloser, error)
 
 // SubscribeFunc is called by a Subscriber when a message is received from a Publisher.
-type SubscribeFunc = func(string, []byte) error
+type SubscribeFunc = func(*Message) error
 
 // NewSubscriber returns a new Subscriber that will subscribe to topics
 // published by an io.ReadWriter.
 func NewSubscriber(id string) *Subscriber {
 	sub := &Subscriber{id: id}
-	sub.ch = make(chan internal.Msg, inQueueSize)
+	sub.ch = make(chan Message, inQueueSize)
 	sub.quit = make(chan bool)
 	sub.proto = &subProtoV1{}
 	return sub
@@ -31,7 +30,7 @@ func NewSubscriber(id string) *Subscriber {
 // Subscriber subscribes to topics published by a Publisher.
 type Subscriber struct {
 	id       string
-	ch       chan internal.Msg
+	ch       chan Message
 	proto    SubProtocol
 	conn     io.ReadWriteCloser
 	connFunc ConnectFunc
@@ -41,6 +40,7 @@ type Subscriber struct {
 	m        sync.Mutex
 }
 
+// run is the engine of the Subscriber.
 func (sub *Subscriber) run() {
 	defer log.Println("subscriber done.")
 
@@ -50,8 +50,10 @@ func (sub *Subscriber) run() {
 	case <-sub.quit:
 		return
 	default:
-		topic, body, err := sub.proto.Recv(sub.conn)
-		// TODO: implement
+		m, err := sub.proto.Recv(sub.conn)
+		check.Error(err)
+
+		check.Must(sub.subFunc(m))
 	}
 }
 

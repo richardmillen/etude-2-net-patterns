@@ -1,6 +1,9 @@
 package pubsub
 
-import "io"
+import (
+	"errors"
+	"io"
+)
 
 // ProtocolSignature is used to identify some messages belonging to the Pub-Sub protocol.
 var ProtocolSignature = [...]byte{0x01, 0x01}
@@ -12,23 +15,16 @@ const (
 	propTopicKey = "topic"
 )
 
-// SubscriptionQueue is the interface of a subscription queue.
-type SubscriptionQueue interface {
-	Conn() io.ReadWriteCloser
-	SetProtocol(p PubProtocol)
-	SetProps(p map[string]string)
-}
-
 // PubProtocol is the Publisher-side of the pub-sub wire protocol.
 type PubProtocol interface {
-	Greet(q SubscriptionQueue) error
-	Send(conn io.ReadWriter, topic string, body []byte) error
+	Greet(q *Queue) error
+	Send(w io.Writer, m *Message) error
 }
 
 // SubProtocol is the Subscriber-side of the pub-sub wire protocol.
 type SubProtocol interface {
 	Ready(sub *Subscriber) error
-	Recv(conn io.ReadWriter) (topic string, body []byte, err error)
+	Recv(r io.Reader) (*Message, error)
 }
 
 // Greeting is a message sent by the publisher immediately after a subscriber connects.
@@ -42,4 +38,13 @@ type Greeting struct {
 type Ready struct {
 	Major uint8
 	Minor uint8
+}
+
+// checkSignature is called to check the protocol signature
+// of a greeting message.
+func checkSignature(sig [2]byte) error {
+	if sig[0] != ProtocolSignature[0] || sig[1] != ProtocolSignature[1] {
+		return errors.New("unexpected protocol signature")
+	}
+	return nil
 }

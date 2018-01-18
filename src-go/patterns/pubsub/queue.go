@@ -8,29 +8,47 @@ import (
 	"sync"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub/internal"
 )
 
 // newQueue constructs a new subscription queue (publisher-side connection).
-func newQueue(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup) *queue {
-	q := &queue{conn: conn, quit: quit, wg: wg}
-	q.ch = make(chan internal.Msg, queueSize)
+func newQueue(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup) *Queue {
+	q := &Queue{conn: conn, quit: quit, wg: wg}
+	q.ch = make(chan Message, queueSize)
 	go q.run()
 	return q
 }
 
-// queue handles a subscriber connection on the Publisher.
-type queue struct {
+// Queue handles a subscriber connection on the Publisher.
+type Queue struct {
 	conn  net.Conn
 	proto PubProtocol
 	id    string
 	topic string
-	ch    chan internal.Msg
+	ch    chan Message
 	quit  chan bool
 	wg    *sync.WaitGroup
 }
 
-func (q *queue) run() {
+// Conn returns a ReadWriteCloser that represents the connection to the Subscriber.
+func (q *Queue) Conn() io.ReadWriteCloser {
+	return q.conn
+}
+
+// SetProtocol is called to provide a queue with a version of the Pub protocol.
+func (q *Queue) SetProtocol(p PubProtocol) {
+	q.proto = p
+}
+
+// SetProps is called to set properties of the queue.
+//
+// TODO: surely the queue shouldn't be reading properties that could become
+// version-specific.
+func (q *Queue) SetProps(p map[string]string) {
+	q.id = p[propIDKey]
+	q.topic = p[propTopicKey]
+}
+
+func (q *Queue) run() {
 	defer q.wg.Done()
 
 	for {
@@ -40,7 +58,7 @@ func (q *queue) run() {
 				break
 			}
 
-			err := q.proto.Send(q.conn, m.Topic, m.Body)
+			err := q.proto.Send(q.conn, &m)
 			if check.Log(err) {
 				return
 			}
@@ -50,37 +68,15 @@ func (q *queue) run() {
 	}
 }
 
-func (q *queue) subscribing(topic string) bool {
+func (q *Queue) subscribing(topic string) bool {
 	return strings.HasPrefix(topic, q.topic)
 }
 
-func (q *queue) send(m internal.Msg) error {
+func (q *Queue) send(m Message) error {
 	select {
 	case q.ch <- m:
 		return nil
 	default:
-		return fmt.Errorf("subscription queue '%s' full", q.id)
+		return fmt.Errorf("subscription queue '%s' is full", q.id)
 	}
-}
-
-// Conn returns a ReadWriteCloser that represents the connection to the Subscriber.
-// Part of the Subscription interface.
-func (q *queue) Conn() io.ReadWriteCloser {
-	return q.conn
-}
-
-// SetProtocol is called to provide a queue with a version of the Pub protocol.
-// Part of the Subscription interface.
-func (q *queue) SetProtocol(p PubProtocol) {
-	q.proto = p
-}
-
-// SetProps is called to set properties of the queue.
-// Part of the Subscription interface.
-//
-// TODO: surely the queue shouldn't be reading properties that could become
-// version-specific.
-func (q *queue) SetProps(p map[string]string) {
-	q.id = p[propIDKey]
-	q.topic = p[propTopicKey]
 }

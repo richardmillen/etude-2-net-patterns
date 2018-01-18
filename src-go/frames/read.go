@@ -19,6 +19,15 @@ func ReadUInt16(r io.Reader) (uint16, error) {
 	return uint16(n), err
 }
 
+// ReadSig returns a protocol signature as a byte array.
+func ReadSig(r io.Reader) ([2]byte, error) {
+	b, err := ReadBytes(r, 2)
+	if err != nil {
+		return [2]byte{}, err
+	}
+	return [...]byte{b[0], b[1]}, nil
+}
+
 // ReadBytes returns a byte slice.
 func ReadBytes(r io.Reader, numBytes int64) ([]byte, error) {
 	reader := io.LimitReader(r, numBytes)
