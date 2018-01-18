@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"log"
-	"sync"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
@@ -37,7 +36,6 @@ type Subscriber struct {
 	subFunc  SubscribeFunc
 	quit     chan bool
 	topics   []string
-	m        sync.Mutex
 }
 
 // run is the engine of the Subscriber.
@@ -46,21 +44,24 @@ func (sub *Subscriber) run() {
 
 	check.Must(sub.proto.Ready(sub))
 
-	select {
-	case <-sub.quit:
-		return
-	default:
-		m, err := sub.proto.Recv(sub.conn)
-		check.Error(err)
+	for {
+		select {
+		case <-sub.quit:
+			return
+		default:
+			m, err := sub.proto.Recv(sub.conn)
+			check.Error(err)
 
-		check.Must(sub.subFunc(m))
+			check.Must(sub.subFunc(m))
+		}
 	}
 }
 
 // Subscribe receives data from one or more publishers.
 // TODO: cater for multiple calls and from multiple goroutines.
+// TODO: how to cater for Close() then Subscribe() ?
 func (sub *Subscriber) Subscribe(connFunc ConnectFunc, subFunc SubscribeFunc, topics ...string) (err error) {
-	if sub.topics == nil {
+	if sub.topics != nil {
 		err = errors.New("already subscribing")
 		return
 	}

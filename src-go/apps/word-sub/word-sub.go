@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub"
@@ -28,7 +29,7 @@ var subID = flag.String("id", subIDTemplate, "Identifier to be used by the subsc
 var server = flag.String("server", "localhost", "Name of machine running word publisher")
 var port = flag.Int("port", 5678, "Port number to connect to")
 var topic = flag.String("lang", "eng", "Language to subscribe to (English='eng', French='fra', Spanish='esp')")
-var wordCount = flag.Int("wordcount", 100, "The number of words to get")
+var wordCount = flag.Int("wordcount", 10, "The number of words to get")
 
 func init() {
 	log.SetPrefix("word-sub: ")
@@ -37,10 +38,13 @@ func init() {
 func main() {
 	flag.Parse()
 
-	sub := pubsub.NewSubscriber(getID())
+	id := getID()
+	log.Printf("starting word subscriber app (id: %s)...\n", id)
+
+	sub := pubsub.NewSubscriber(id)
 	defer sub.Close()
 
-	log.Printf("Subscribing to '%s' words...\n", *topic)
+	log.Printf("subscribing to %d '%s' words...\n", *wordCount, *topic)
 	finished := make(chan bool)
 	n := 0
 
@@ -48,6 +52,7 @@ func main() {
 		log.Printf("%s: %s\n", m.Topic, string(m.Body))
 
 		if n++; n == *wordCount {
+			log.Println("finishing...")
 			finished <- true
 		}
 
@@ -56,16 +61,19 @@ func main() {
 
 	// we have nothing else to do but wait...
 	<-finished
+
+	log.Println("done.")
 }
 
 // connect opens a connection to a Publisher.
 func connect() (io.ReadWriteCloser, error) {
-	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf("%s:%d", *server, *port))
-	if err != nil {
-		return nil, err
+	log.Printf("connecting to %s:%d...\n", *server, *port)
+
+	d := net.Dialer{
+		Timeout: time.Second,
 	}
 
-	return net.DialTCP("tcp", nil, addr)
+	return d.Dial("tcp", fmt.Sprintf("%s:%d", *server, *port))
 }
 
 func getID() string {
