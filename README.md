@@ -83,7 +83,34 @@ A study of networking patterns over TCP & UDP, with implementations in Go & C++.
 
 ## P2P / Decentralised
 
-> TODO: add notes.
++ UDP
+  - beacons *(as above)*
+  - multicast to logical group
+  - parallel over WiFi AP *(TCP - serial/blocking; at bit rate of slowest/furthest device)*
++ silence -> TCP heartbeats -> DEAD
++ *recovery* channel
++ commands:
+  - `HELLO`
+    - list of groups.
+    - list of other services e.g. logging, file transfer etc.
+  - `JOIN` / `LEAVE`
++ direct point-to-point messaging
++ groups
+  - track nodes *(join/leave)*
++ replication *(snapshots)* - Pub-Sub:
+  1. subscribe
+  1. recv 1 upd.
+  1. queue updates
+  1. request snapshot
+  1. recv snapshot
+  1. apply queued updates
++ subtrees *(/path/to/res)*
++ peer state
+  - change counter; rolling 1 byte buffer
++ *mediator*; elected
+
+
+
 
 ## The zguide
 
