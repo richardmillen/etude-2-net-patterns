@@ -2,6 +2,24 @@
 
 A study of networking patterns over TCP & UDP, with implementations in Go & C++.
 
+## Service Discovery
+
+### UDP Surveys
+
++ message
+  - ...
+  - ...
+
+*n.b. what about local service discovery?*
+
+## Service Presence
+
+### UDP Beacons
+
++ message
+  - header: "FOO1"
+  - body: service TCP port
+
 ## Pub-Sub
 
 > Publisher sends a stream of messages.  
@@ -73,14 +91,6 @@ A study of networking patterns over TCP & UDP, with implementations in Go & C++.
 + encryption
 + interruption; resume after disconnect
 
-## Service Presence
-
-### UDP beacons
-
-+ message
-  - header: "FOO1"
-  - body: service TCP port
-
 ## P2P / Decentralised
 
 + UDP
@@ -109,8 +119,17 @@ A study of networking patterns over TCP & UDP, with implementations in Go & C++.
   - change counter; rolling 1 byte buffer
 + *mediator*; elected
 
+### Problems
 
-
++ peer discovery
++ interop w/ existing networks
++ data privacy
++ data integrity *(esp. over WAN, WiFi)*
++ logging & monitoring
++ large scale testing & simulation
++ group messaging
++ wide-area bridging
++ configuration
 
 ## The zguide
 
