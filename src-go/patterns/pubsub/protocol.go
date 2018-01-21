@@ -27,14 +27,14 @@ type SubProtocol interface {
 	Recv(r io.Reader) (*Message, error)
 }
 
-// Greeting is a message sent by the publisher immediately after a subscriber connects.
+// Greeting is a message sent by a Publisher immediately after a subscriber connects.
 type Greeting struct {
 	Signature [2]byte
 	Major     uint8
 	Minor     uint8
 }
 
-// Ready is a message sent by the subscriber in response to a greeting.
+// Ready is a message sent by a Subscriber in response to a greeting.
 type Ready struct {
 	Major uint8
 	Minor uint8
