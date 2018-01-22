@@ -1,34 +1,54 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"net"
 	"os"
+	"os/signal"
+
+	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/disco"
 )
 
+// change default port to 0 (zero) to use ephemeral port.
+var port = flag.Int("echo-port", 5858, "port number to listen for echo requests at.")
+
 func main() {
-	source := ":1202"
-	conn, err := net.ListenPacket("udp", source)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
+	flag.Parse()
 
-	for {
-		fmt.Println("waiting...")
+	defer func() {
+		fmt.Println("done.")
+	}()
 
-		buf := make([]byte, 8)
-		_, addr, err := conn.ReadFrom(buf)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "read error: %v\n", err)
-			continue
-		}
+	log.Printf("starting discoverable echo server (port #%d)...\n", *port)
 
-		fmt.Printf("echo: %v\n", string(buf))
-		_, err = conn.WriteTo(buf, addr)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "write error: %v\n", err)
-		}
-	}
+	echo := startEchoServer()
+	defer echo.Close()
+
+	candidate := startCandidate(echo)
+	defer candidate.Close()
+
+	ctrlC := make(chan os.Signal, 1)
+	signal.Notify(ctrlC, os.Interrupt)
+	<-ctrlC
+}
+
+func startEchoServer() *echo.Server {
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", *port))
+	check.Error(err)
+
+	listener, err := net.ListenTCP("tcp", addr)
+	check.Error(err)
+	defer listener.Close()
+
+	return echo.NewServer(listener)
+}
+
+func startCandidate(echo *echo.Server) *disco.Candidate {
+	candidate := disco.NewCandidate()
+	candidate.AddService(echo.ServiceName, listener.Addr().String())
+	check.Must(candidate.Open())
+	return candidate
 }

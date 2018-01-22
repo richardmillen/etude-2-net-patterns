@@ -1,12 +1,13 @@
 package pubsub
 
 import (
-	"errors"
 	"io"
+
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns"
 )
 
-// ProtocolSignature is used to identify some messages belonging to the Pub-Sub protocol.
-var ProtocolSignature = [...]byte{0x01, 0x01}
+// ProtocolSignature is used to identify messages belonging to the Pub-Sub protocol.
+var ProtocolSignature = [...]byte{0x01, 0x00}
 
 const (
 	// PropIDKey is the identifier of the 'id' message property.
@@ -43,8 +44,8 @@ type Ready struct {
 // checkSignature is called to check the protocol signature
 // of a greeting message.
 func checkSignature(sig [2]byte) error {
-	if sig[0] != ProtocolSignature[0] || sig[1] != ProtocolSignature[1] {
-		return errors.New("unexpected protocol signature")
+	if sig != ProtocolSignature {
+		return patterns.ErrInvalidSig
 	}
 	return nil
 }

@@ -55,14 +55,14 @@ func (v1 *greetingV1) read(r io.Reader) (err error) {
 }
 
 // write sends the greeting to a subscription.
-func (v1 *greetingV1) write(conn io.Writer) (err error) {
+func (v1 *greetingV1) write(w io.Writer) (err error) {
 	buf := make([]byte, 4)
 
 	copy(buf, v1.Signature[:])
 	buf[2] = byte(v1.Major)
 	buf[3] = byte(v1.Minor)
 
-	_, err = conn.Write(buf)
+	_, err = w.Write(buf)
 	return
 }
 

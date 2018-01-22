@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"net"
 	"time"
 
@@ -21,50 +20,30 @@ func main() {
 		fmt.Println("done.")
 	}()
 
-	endpoints, err := runSurvey()
-	check.Must(err)
-
-	if *service != "echo" {
-		fmt.Println("as you're not testing the echo service there's nothing more to do.")
-		return
-	}
-
-	for _, ep := range endpoints {
-		echo(ep)
-	}
-}
-
-func runSurvey() ([]*disco.Endpoint, error) {
-	defer timeThis("survey")()
+	finished := make(chan bool)
 
 	surveyor := disco.NewSurveyor(*addr)
-	return surveyor.Survey(*service)
-}
+	defer surveyor.Close()
 
-func echo(endpoint *disco.Endpoint) {
-	defer timeThis("echo")()
+	check.Must(surveyor.Survey(func(endpoint *disco.Endpoint) error {
+		defer timeThis("echo (survey response)")()
 
-	conn, err := net.Dial("udp", endpoint.Addr)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
+		conn, err := net.Dial("tcp", endpoint.Addr)
+		check.Error(err)
+		defer conn.Close()
 
-	fmt.Println("sending hello...")
-	_, err = conn.Write([]byte("hello"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
+		check.Must(echo.Send(conn, endpoint, "hello"))
 
-	fmt.Println("receiving response...")
-	buf := make([]byte, 8)
-	_, err = conn.Read(buf)
-	if err != nil {
-		log.Fatal(err)
-	}
+		rep, err := echo.Recv(conn)
+		check.Error(err)
 
-	fmt.Printf("received: '%s'\n", string(buf))
+		fmt.Printf("received: '%s'\n", string(rep))
+
+		finished <- true
+		return disco.ErrEndSurvey
+	}, duration.Second, *service))
+
+	<-finished
 }
 
 func timeThis(message string) func() {
