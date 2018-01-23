@@ -11,10 +11,10 @@ import (
 const inQueueSize = 10
 
 // ConnectFunc is called by a Subscriber to connect to a Publisher.
-type ConnectFunc = func() (io.ReadWriteCloser, error)
+type ConnectFunc func() (io.ReadWriteCloser, error)
 
 // SubscribeFunc is called by a Subscriber when a message is received from a Publisher.
-type SubscribeFunc = func(*Message) error
+type SubscribeFunc func(*Message) error
 
 // NewSubscriber returns a new Subscriber that will subscribe to topics
 // published by an io.ReadWriter.

@@ -13,17 +13,21 @@ import (
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/disco"
 )
 
-// change default port to 0 (zero) to use ephemeral port.
-var port = flag.Int("echo-port", 5858, "port number to listen for echo requests at.")
+// default port is 0 (zero) in order to use ephemeral port.
+var port = flag.Int("echo-port", 0, "port number to listen for echo requests at.")
+
+func init() {
+	log.SetPrefix("survey-server: ")
+}
 
 func main() {
 	flag.Parse()
 
 	defer func() {
-		fmt.Println("done.")
+		log.Println("done.")
 	}()
 
-	log.Printf("starting discoverable echo server (port #%d)...\n", *port)
+	log.Println("starting survey server...")
 
 	echo := startEchoServer()
 	defer echo.Close()
@@ -31,26 +35,40 @@ func main() {
 	candidate := startCandidate(echo)
 	defer candidate.Close()
 
-	ctrlC := make(chan os.Signal, 1)
-	signal.Notify(ctrlC, os.Interrupt)
-	<-ctrlC
+	log.Println("survey server started.")
+
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, os.Interrupt)
+
+	<-sigint
+	log.Println("server interrupted.")
 }
 
 func startEchoServer() *echo.Server {
+	log.Printf("starting echo server on %s...\n", echoPortDesc())
+
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", *port))
 	check.Error(err)
 
 	listener, err := net.ListenTCP("tcp", addr)
 	check.Error(err)
-	defer listener.Close()
 
 	return echo.NewServer(listener)
 }
 
 // HACK: this assumes that the echo server address will remain the same throughout the session.
 func startCandidate(s *echo.Server) *disco.Candidate {
+	log.Println("starting service candidate...")
+
 	candidate := disco.NewCandidate()
 	candidate.AddService(echo.ServiceName, s.Addr())
 	check.Must(candidate.Open())
 	return candidate
+}
+
+func echoPortDesc() string {
+	if *port == 0 {
+		return "ephemeral port"
+	}
+	return fmt.Sprintf("port %d", *port)
 }

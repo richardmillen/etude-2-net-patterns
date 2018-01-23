@@ -1,7 +1,7 @@
 package disco
 
 import (
-	"errors"
+	"log"
 	"net"
 	"strconv"
 
@@ -9,11 +9,15 @@ import (
 )
 
 // NewCandidate constructs a new survey candidate.
+//
+// The quit channel is buffered in order to avoid
+// a deadlock when Candidate.Close() is called.
 func NewCandidate() *Candidate {
 	return &Candidate{
 		Port:             surveyPort,
 		serviceEndpoints: make(map[string]*Endpoint),
-		quit:             make(chan bool),
+		quit:             make(chan bool, 1),
+		stopped:          make(chan bool),
 	}
 }
 
@@ -23,30 +27,28 @@ type Candidate struct {
 	Port             int
 	serviceEndpoints map[string]*Endpoint
 	conn             net.PacketConn
-	isOpen           bool
 	quit             chan bool
+	stopped          chan bool
 }
 
 // AddService is called to add a service name / endpoint address mapping.
 func (c *Candidate) AddService(name string, addr string) {
-	check.IsFalse(c.isOpen, "Candidate.isOpen")
-
 	c.serviceEndpoints[name] = NewEndpoint(addr)
 }
 
 // Open is called to start responding to survey requests.
 func (c *Candidate) Open() (err error) {
-	if c.isOpen {
-		return errors.New("candidate is already open for surveys")
-	}
-
 	c.conn, err = net.ListenPacket("udp", ":"+strconv.Itoa(c.Port))
 	if check.Log(err) {
 		return
 	}
 
-	c.isOpen = true
 	go func() {
+		defer func() {
+			log.Println("service candidate stopped.")
+			c.stopped <- true
+		}()
+
 		for {
 			select {
 			case <-c.quit:
@@ -83,8 +85,12 @@ func (c *Candidate) Open() (err error) {
 }
 
 // Close causes the survey candidate to stop listening for incoming survey requests.
-// TODO: handle multiple calls(?)
-func (c *Candidate) Close() error {
+//
+// Candidate.quit is buffered so no need to use cumbersome select{}.
+func (c *Candidate) Close() (err error) {
 	c.quit <- true
-	return c.conn.Close()
+	err = c.conn.Close()
+
+	<-c.stopped
+	return
 }

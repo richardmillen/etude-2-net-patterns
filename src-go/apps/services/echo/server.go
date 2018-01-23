@@ -2,6 +2,7 @@ package echo
 
 import (
 	"io"
+	"log"
 	"net"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
@@ -9,10 +10,15 @@ import (
 )
 
 // NewServer constructs a new instance of an Echo Server.
+//
+// The quit channel is buffered in order to avoid
+// a deadlock when Server.Close() is called.
 func NewServer(l net.Listener) *Server {
 	s := &Server{
-		UUID: uuid.New(),
-		quit: make(chan bool),
+		UUID:     uuid.New(),
+		listener: l,
+		quit:     make(chan bool, 1),
+		stopped:  make(chan bool),
 	}
 	go s.run()
 	return s
@@ -23,28 +29,33 @@ type Server struct {
 	UUID     uuid.Bytes
 	listener net.Listener
 	quit     chan bool
+	stopped  chan bool
 }
 
 func (s *Server) run() {
+	defer func() {
+		log.Println("echo server stopped.")
+		s.stopped <- true
+	}()
+
 	for {
 		select {
 		case <-s.quit:
 			return
 		default:
 			conn, err := s.listener.Accept()
-			check.Error(err)
+			if check.Log(err) {
+				continue
+			}
 
 			text, err := s.recv(conn)
-			check.Error(err)
+			if check.Log(err) {
+				continue
+			}
 
-			check.Must(s.send(conn, text))
+			check.Log(s.send(conn, text))
 		}
 	}
-}
-
-// Addr returns the address of the echo server.
-func (s *Server) Addr() string {
-	return s.listener.Addr().String()
 }
 
 // recv is called to receive an echo request message.
@@ -70,8 +81,18 @@ func (s *Server) send(w io.Writer, text string) error {
 	return rep.write(w)
 }
 
+// Addr returns the address of the echo server.
+func (s *Server) Addr() string {
+	return s.listener.Addr().String()
+}
+
 // Close quits the server background goroutine and closes the TCP connection.
-func (s *Server) Close() error {
+//
+// Server.quit is buffered so no need to use cumbersome select{}.
+func (s *Server) Close() (err error) {
 	s.quit <- true
-	return s.listener.Close()
+	err = s.listener.Close()
+
+	<-s.stopped
+	return
 }

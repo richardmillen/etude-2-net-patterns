@@ -13,7 +13,7 @@ import (
 const surveyPort = 5677
 
 // SurveyResponseFunc is called each time a survey respondant's message is received.
-type SurveyResponseFunc = func(endpoint *Endpoint) error
+type SurveyResponseFunc func(endpoint *Endpoint) error
 
 // ErrEndSurvey is a special sentinal error value returned by a SurveyResponseFunc
 // which is intended to tell a Surveyor to end an ongoing survey.

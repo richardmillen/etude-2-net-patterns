@@ -3,22 +3,28 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"net"
 	"time"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/apps/services/echo"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/diags"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/disco"
 )
 
 var service = flag.String("service", "echo", "name of service to look for.")
 var addr = flag.String("addr", "localhost", "name or ip address. can be broadcast (IP v4 only), multicast or unicast address.")
 
+func init() {
+	log.SetPrefix("survey-client: ")
+}
+
 func main() {
 	flag.Parse()
 
 	defer func() {
-		fmt.Println("done.")
+		log.Println("done.")
 	}()
 
 	finished := make(chan bool)
@@ -27,7 +33,7 @@ func main() {
 	defer surveyor.Close()
 
 	check.Must(surveyor.Survey(func(endpoint *disco.Endpoint) error {
-		defer timeThis("echo (survey response)")()
+		defer diags.Start("echo (survey response)")()
 
 		conn, err := net.Dial("tcp", endpoint.Addr)
 		check.Error(err)
@@ -45,12 +51,4 @@ func main() {
 	}, time.Second, *service))
 
 	<-finished
-}
-
-func timeThis(message string) func() {
-	fmt.Println("started: ", message)
-	started := time.Now()
-	return func() {
-		fmt.Printf("elapsed: %v.\n", time.Since(started))
-	}
 }
