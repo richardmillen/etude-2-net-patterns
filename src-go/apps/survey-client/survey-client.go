@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"math/rand"
 	"net"
 	"time"
 
@@ -18,25 +19,23 @@ var echoText = flag.String("echo-text", "hello", "text to be sent to echo server
 
 func init() {
 	log.SetPrefix("survey-client: ")
+	rand.Seed(time.Now().Unix())
 }
 
 func main() {
 	flag.Parse()
+	delay()
 
-	defer func() {
-		log.Println("done.")
-	}()
+	defer diags.Start("echo")()
 
 	log.Println("starting survey client...")
-
-	finished := make(chan bool)
 
 	surveyor := disco.NewSurveyor(*addr)
 	defer surveyor.Close()
 
-	check.Must(surveyor.Survey(func(addr string) error {
-		defer diags.Start("echo")()
+	finished := make(chan bool)
 
+	check.Must(surveyor.Survey(func(addr string) error {
 		conn, err := net.Dial("tcp", addr)
 		check.Error(err)
 		defer conn.Close()
@@ -55,4 +54,14 @@ func main() {
 	}, time.Second, *service))
 
 	<-finished
+}
+
+// delay was added as a quick hack to enable higher volumes.
+func delay() {
+	log.Println("waiting for random (short) duration...")
+
+	ms := rand.Intn(2000) + 1000
+	time.Sleep(time.Millisecond * time.Duration(ms))
+
+	log.Println("resuming...")
 }
