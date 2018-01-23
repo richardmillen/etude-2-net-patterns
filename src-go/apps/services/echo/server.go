@@ -4,6 +4,8 @@ import (
 	"io"
 	"log"
 	"net"
+	"os"
+	"strings"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/uuid"
@@ -43,6 +45,8 @@ func (s *Server) run() {
 		case <-s.quit:
 			return
 		default:
+			log.Println("waiting for incoming echo request...")
+
 			conn, err := s.listener.Accept()
 			if check.Log(err) {
 				continue
@@ -83,7 +87,11 @@ func (s *Server) send(w io.Writer, text string) error {
 
 // Addr returns the address of the echo server.
 func (s *Server) Addr() string {
-	return s.listener.Addr().String()
+	host, err := os.Hostname()
+	check.Error(err)
+
+	addr := s.listener.Addr().String()
+	return strings.Replace(addr, "[::]", host, 1)
 }
 
 // Close quits the server background goroutine and closes the TCP connection.

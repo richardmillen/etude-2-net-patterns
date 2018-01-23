@@ -3,6 +3,7 @@ package disco
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net"
 	"time"
 
@@ -13,7 +14,7 @@ import (
 const surveyPort = 5677
 
 // SurveyResponseFunc is called each time a survey respondant's message is received.
-type SurveyResponseFunc func(endpoint *Endpoint) error
+type SurveyResponseFunc func(addr string) error
 
 // ErrEndSurvey is a special sentinal error value returned by a SurveyResponseFunc
 // which is intended to tell a Surveyor to end an ongoing survey.
@@ -22,18 +23,20 @@ var ErrEndSurvey = errors.New("disco.Survey: end survey")
 // NewSurveyor constructs a new Surveyor.
 func NewSurveyor(addr string) *Surveyor {
 	return &Surveyor{
-		addr: addr,
-		port: surveyPort,
-		quit: make(chan bool),
+		addr:     addr,
+		port:     surveyPort,
+		quit:     make(chan bool, 1),
+		finished: make(chan bool),
 	}
 }
 
 // Surveyor surveys the network for a service.
 type Surveyor struct {
-	addr string
-	port int
-	conn net.Conn
-	quit chan bool
+	addr     string
+	port     int
+	conn     net.Conn
+	quit     chan bool
+	finished chan bool
 }
 
 // Addr returns the full address to be surveyed.
@@ -44,19 +47,26 @@ func (s *Surveyor) Addr() string {
 // Survey looks for a service by name, calling responseFunc for every response received within a specified timeframe.
 // TODO: trap / enable(?) multiple calls to Survey().
 func (s *Surveyor) Survey(responseFunc SurveyResponseFunc, timeout time.Duration, service string) (err error) {
+	log.Printf("starting survey, searching for '%s'...\n", service)
+
 	s.conn, err = net.Dial("udp", s.Addr())
 	if err != nil {
 		return
 	}
 
 	go func() {
-		defer s.conn.Close()
+		defer func() {
+			log.Println("survey finished.")
+			s.finished <- true
+		}()
 
 		req := survey{}
 		req.signature = protocolSignature
 		req.command = cmdSurvey
 		req.surveyID = uuid.New()
 		req.data = []byte(service)
+
+		log.Printf("sending survey message (id: %s)...\n", req.surveyID)
 
 		err := req.write(s.conn)
 		if check.Log(err) {
@@ -67,17 +77,25 @@ func (s *Surveyor) Survey(responseFunc SurveyResponseFunc, timeout time.Duration
 		for {
 			select {
 			case <-timer.C:
+				log.Println("survey timed out.")
+
 				err = s.conn.Close()
 				check.Log(err)
 				return
 			default:
+				log.Println("waiting for survey response...")
+
 				res := response{}
+
 				err = res.read(s.conn, req.surveyID)
 				if check.Log(err) {
 					continue
 				}
 
-				// TODO: get endpoint info from response.
+				addr := s.getAddr(res.data)
+				if check.Log(responseFunc(addr)) {
+					return
+				}
 			}
 		}
 	}()
@@ -86,7 +104,15 @@ func (s *Surveyor) Survey(responseFunc SurveyResponseFunc, timeout time.Duration
 }
 
 // Close ends any ongoing surveys.
-func (s *Surveyor) Close() error {
-	close(s.quit)
-	return s.conn.Close()
+func (s *Surveyor) Close() (err error) {
+	s.quit <- true
+	err = s.conn.Close()
+
+	<-s.finished
+	return
+}
+
+// TODO: if we surveyed "localhost", then replace the host name with "localhost"
+func (s *Surveyor) getAddr(data []byte) string {
+	return string(data)
 }

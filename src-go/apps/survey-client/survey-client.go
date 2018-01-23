@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"net"
 	"time"
@@ -15,6 +14,7 @@ import (
 
 var service = flag.String("service", "echo", "name of service to look for.")
 var addr = flag.String("addr", "localhost", "name or ip address. can be broadcast (IP v4 only), multicast or unicast address.")
+var echoText = flag.String("echo-text", "hello", "text to be sent to echo server.")
 
 func init() {
 	log.SetPrefix("survey-client: ")
@@ -27,24 +27,28 @@ func main() {
 		log.Println("done.")
 	}()
 
+	log.Println("starting survey client...")
+
 	finished := make(chan bool)
 
 	surveyor := disco.NewSurveyor(*addr)
 	defer surveyor.Close()
 
-	check.Must(surveyor.Survey(func(endpoint *disco.Endpoint) error {
-		defer diags.Start("echo (survey response)")()
+	check.Must(surveyor.Survey(func(addr string) error {
+		defer diags.Start("echo")()
 
-		conn, err := net.Dial("tcp", endpoint.Addr)
+		conn, err := net.Dial("tcp", addr)
 		check.Error(err)
 		defer conn.Close()
 
-		check.Must(echo.Send(conn, "hello"))
+		log.Printf("sending '%s'\n", *echoText)
+
+		check.Must(echo.Send(conn, *echoText))
 
 		rep, err := echo.Recv(conn)
 		check.Error(err)
 
-		fmt.Printf("received: '%s'\n", string(rep))
+		log.Printf("received: '%s'\n", rep)
 
 		finished <- true
 		return disco.ErrEndSurvey

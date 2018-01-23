@@ -37,6 +37,14 @@ func (c *Candidate) AddService(name string, addr string) {
 }
 
 // Open is called to start responding to survey requests.
+//
+// TODO: set SO_REUSEADDR to enable multiple endpoints to listen on machine.
+// + https://github.com/golang/go/issues/9661
+//
+// TODO: look into net.ListenMulticastUDP & golang.org/x/net/
+// + https://golang.org/pkg/net/#ListenMulticastUDP
+// + https://godoc.org/golang.org/x/net/ipv4
+// + https://godoc.org/golang.org/x/net/ipv6
 func (c *Candidate) Open() (err error) {
 	c.conn, err = net.ListenPacket("udp", ":"+strconv.Itoa(c.Port))
 	if check.Log(err) {
@@ -67,8 +75,11 @@ func (c *Candidate) Open() (err error) {
 					continue
 				}
 
+				log.Printf("looking up service '%s'...\n", string(req.data))
+
 				endpoint, ok := c.serviceEndpoints[string(req.data)]
 				if !ok {
+					log.Printf("service name '%s' not known.\n", string(req.data))
 					continue
 				}
 

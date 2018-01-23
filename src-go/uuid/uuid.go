@@ -17,7 +17,6 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
-	"log"
 )
 
 // Size is the byte length of a raw UUID.
@@ -31,11 +30,22 @@ func New() Bytes {
 	uuid := make([]byte, Size)
 	_, err := io.ReadFull(rand.Reader, uuid)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 	uuid[8] = uuid[8]&^0xc0 | 0x80
 	uuid[6] = uuid[6]&^0xf0 | 0x40
 	return uuid
+}
+
+// NewFrom constructs a new UUID from a byte slice.
+func NewFrom(src []byte) Bytes {
+	if len(src) != Size {
+		panic(fmt.Errorf("invalid uuid bytes with length %d", len(src)))
+	}
+
+	b := make([]byte, Size)
+	copy(b, src)
+	return Bytes(b)
 }
 
 // Equal returns true if two UUIDs are identical.
@@ -45,5 +55,6 @@ func Equal(a, b Bytes) bool {
 
 // String returns the UUID bytes as a string.
 func (b Bytes) String() string {
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+	b2 := []byte(b)
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b2[0:4], b2[4:6], b2[6:8], b2[8:10], b2[10:])
 }

@@ -2,10 +2,10 @@ package check
 
 import "log"
 
-// Must panics when passed a valid error.
+// Must logs an error and panics.
 func Must(err error) {
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 }
 
@@ -19,7 +19,7 @@ func Error(err error) {
 // Log returns true if a valid error was logged.
 func Log(err error) bool {
 	if err != nil {
-		log.Println(err)
+		log.Println("error:", err)
 		return true
 	}
 	return false
