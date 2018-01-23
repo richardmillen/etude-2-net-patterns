@@ -40,6 +40,8 @@ func (c *Candidate) AddService(name string, addr string) {
 //
 // TODO: set SO_REUSEADDR to enable multiple endpoints to listen on machine.
 // + https://github.com/golang/go/issues/9661
+// + https://github.com/kavu/go_reuseport
+// + https://github.com/libp2p/go-reuseport
 //
 // TODO: look into net.ListenMulticastUDP & golang.org/x/net/
 // + https://golang.org/pkg/net/#ListenMulticastUDP
