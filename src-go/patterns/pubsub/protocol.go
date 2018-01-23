@@ -7,7 +7,8 @@ import (
 )
 
 // ProtocolSignature is used to identify messages belonging to the Pub-Sub protocol.
-var ProtocolSignature = [...]byte{0x01, 0x00}
+// 10101011 11[000001], where [nnnnnn] identifies the protocol.
+var ProtocolSignature = [...]byte{0xAB, 0xC1}
 
 const (
 	// PropIDKey is the identifier of the 'id' message property.

@@ -1,13 +1,4 @@
-package uuid
-
-import (
-	"crypto/rand"
-	"fmt"
-	"io"
-	"log"
-)
-
-// New generates a random UUID according to RFC4122
+// Package uuid may be used to generate random UUID's according to RFC4122.
 //
 // see sections 4.1.1 & 4.1.3 for lines 74 & 75 respectively.
 //
@@ -19,13 +10,40 @@ import (
 // returning the error because:
 // a) the returned error pollutes the interface
 // b) if an error occurs then there's something fundamentally wrong
-func New() string {
-	uuid := make([]byte, 16)
+package uuid
+
+import (
+	"bytes"
+	"crypto/rand"
+	"fmt"
+	"io"
+	"log"
+)
+
+// Size is the byte length of a raw UUID.
+const Size = 16
+
+// Bytes represents the raw (16) bytes of a UUID.
+type Bytes []byte
+
+// New generates a random UUID.
+func New() Bytes {
+	uuid := make([]byte, Size)
 	_, err := io.ReadFull(rand.Reader, uuid)
 	if err != nil {
 		log.Fatal(err)
 	}
 	uuid[8] = uuid[8]&^0xc0 | 0x80
 	uuid[6] = uuid[6]&^0xf0 | 0x40
-	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
+	return uuid
+}
+
+// Equal returns true if two UUIDs are identical.
+func Equal(a, b Bytes) bool {
+	return bytes.Equal([]byte(a), []byte(b))
+}
+
+// String returns the UUID bytes as a string.
+func (b Bytes) String() string {
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }

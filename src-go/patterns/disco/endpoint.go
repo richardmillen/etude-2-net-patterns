@@ -9,6 +9,6 @@ func NewEndpoint(addr string) *Endpoint {
 
 // Endpoint represents a discovery endpoint.
 type Endpoint struct {
-	UUID string
+	UUID uuid.Bytes
 	Addr string
 }

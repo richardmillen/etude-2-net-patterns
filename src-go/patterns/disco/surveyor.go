@@ -55,9 +55,8 @@ func (s *Surveyor) Survey(responseFunc SurveyResponseFunc, timeout time.Duration
 		req := survey{}
 		req.signature = protocolSignature
 		req.command = cmdSurvey
-		copy(req.surveyID[:], []byte(uuid.New()))
-		req.serviceLen = uint8(len(service))
-		req.service = []byte(service)
+		req.surveyID = uuid.New()
+		req.data = []byte(service)
 
 		err := req.write(s.conn)
 		if check.Log(err) {

@@ -9,8 +9,8 @@ import (
 )
 
 // NewCandidate constructs a new survey candidate.
-func NewCandidate() Candidate {
-	return Candidate{
+func NewCandidate() *Candidate {
+	return &Candidate{
 		Port:             surveyPort,
 		serviceEndpoints: make(map[string]*Endpoint),
 		quit:             make(chan bool),
@@ -70,9 +70,7 @@ func (c *Candidate) Open() (err error) {
 					continue
 				}
 
-				res := newResponse(&req)
-				res.setEndpoint(endpoint)
-
+				res := newResponse(&req, endpoint.Addr)
 				err = res.writeTo(c.conn, addr)
 				if check.Log(err) {
 					continue

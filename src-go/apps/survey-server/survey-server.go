@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/richardmillen/etude-2-net-patterns/src-go/apps/services/echo"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/disco"
 )
@@ -46,9 +47,10 @@ func startEchoServer() *echo.Server {
 	return echo.NewServer(listener)
 }
 
-func startCandidate(echo *echo.Server) *disco.Candidate {
+// HACK: this assumes that the echo server address will remain the same throughout the session.
+func startCandidate(s *echo.Server) *disco.Candidate {
 	candidate := disco.NewCandidate()
-	candidate.AddService(echo.ServiceName, listener.Addr().String())
+	candidate.AddService(echo.ServiceName, s.Addr())
 	check.Must(candidate.Open())
 	return candidate
 }

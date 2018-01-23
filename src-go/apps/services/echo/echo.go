@@ -3,20 +3,17 @@ package echo
 import (
 	"fmt"
 	"io"
-
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/disco"
 )
 
 // ServiceName is the name used when referring to the Echo service.
 const ServiceName = "echo"
 
 // Send is called by a client to send an echo request to an echo server.
-func Send(w io.Writer, endpoint *disco.Endpoint, text string) error {
+func Send(w io.Writer, text string) error {
 	req := request{}
 	req.signature = protocolSignature
-	req.endpointID = endpoint.UUID
-	req.textLen = len(text)
-	req.text = text
+	req.textLen = uint8(len(text))
+	req.text = []byte(text)
 	return req.write(w)
 }
 

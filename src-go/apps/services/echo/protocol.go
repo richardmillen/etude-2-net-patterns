@@ -7,14 +7,14 @@ import (
 )
 
 // protocolSignature is used to identify messages belonging to the Echo protocol.
-var protocolSignature = [...]byte{0x00, 0x02}
+// 10101011 11[000011], where [nnnnnn] identifies the protocol.
+var protocolSignature = [...]byte{0xAB, 0xC3}
 
 // request echo message sent from client to server.
 type request struct {
-	signature  [2]byte
-	endpointID [16]byte
-	textLen    uint8
-	text       []byte
+	signature [2]byte
+	textLen   uint8
+	text      []byte
 }
 
 func (req *request) read(r io.Reader) (err error) {
@@ -23,33 +23,31 @@ func (req *request) read(r io.Reader) (err error) {
 		return
 	}
 
-	epid, err := frames.ReadBytes(r, 16)
-	if err != nil {
-		return
-	}
-	copy(req.endpointID[:], epid)
-
 	req.textLen, err = frames.ReadUInt8(r)
 	if err != nil {
 		return
 	}
 
-	req.text, err = frames.ReadBytes(r, req.textLen)
+	req.text, err = frames.ReadBytes(r, int64(req.textLen))
 	return
 }
 
 func (req *request) write(w io.Writer) (err error) {
-	buf := make([]byte, 2+16+1+req.textLen)
+	buf := make([]byte, 2+1+req.textLen)
 	bufView := buf
 
 	bufView = frames.WriteBytes(bufView, req.signature[:])
-	bufView = frames.WriteBytes(bufView, req.endpointID[:])
 	bufView = frames.WriteUInt8(bufView, req.textLen)
 	bufView = frames.WriteBytes(bufView, req.text)
 
 	_, err = w.Write(buf)
 	return
 }
+
+const (
+	codeOK  = 0
+	codeErr = 1
+)
 
 // reply echo message sent from server back to client.
 type reply struct {
@@ -64,12 +62,12 @@ func (rep *reply) read(r io.Reader) (err error) {
 		return
 	}
 
-	rep.bodyLen, err := frames.ReadUInt8(r)
+	rep.bodyLen, err = frames.ReadUInt8(r)
 	if err != nil {
 		return
 	}
 
-	rep.body, err = frames.ReadBytes(r, rep.bodyLen)
+	rep.body, err = frames.ReadBytes(r, int64(rep.bodyLen))
 	return
 }
 

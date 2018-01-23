@@ -6,6 +6,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/richardmillen/etude-2-net-patterns/src-go/apps/services/echo"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/disco"
 )
@@ -32,7 +33,7 @@ func main() {
 		check.Error(err)
 		defer conn.Close()
 
-		check.Must(echo.Send(conn, endpoint, "hello"))
+		check.Must(echo.Send(conn, "hello"))
 
 		rep, err := echo.Recv(conn)
 		check.Error(err)
@@ -41,7 +42,7 @@ func main() {
 
 		finished <- true
 		return disco.ErrEndSurvey
-	}, duration.Second, *service))
+	}, time.Second, *service))
 
 	<-finished
 }
