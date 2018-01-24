@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
 
 // NewCandidate constructs a new survey candidate.
@@ -15,7 +16,7 @@ import (
 func NewCandidate() *Candidate {
 	return &Candidate{
 		Port:             surveyPort,
-		serviceEndpoints: make(map[string]*Endpoint),
+		serviceEndpoints: make(map[string]*core.Endpoint),
 		quit:             make(chan bool, 1),
 		stopped:          make(chan bool),
 	}
@@ -25,7 +26,7 @@ func NewCandidate() *Candidate {
 // TODO: come up with better name (and description).
 type Candidate struct {
 	Port             int
-	serviceEndpoints map[string]*Endpoint
+	serviceEndpoints map[string]*core.Endpoint
 	conn             net.PacketConn
 	quit             chan bool
 	stopped          chan bool
@@ -33,7 +34,7 @@ type Candidate struct {
 
 // AddService is called to add a service name / endpoint address mapping.
 func (c *Candidate) AddService(name string, addr string) {
-	c.serviceEndpoints[name] = NewEndpoint(addr)
+	c.serviceEndpoints[name] = core.NewEndpoint(addr)
 }
 
 // Open is called to start responding to survey requests.

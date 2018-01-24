@@ -7,13 +7,18 @@ import (
 	"sync"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/uuid"
 )
 
 // DefQueueSize is intended to be used as the default size for connection Queues.
 const DefQueueSize = 10
 
-// PropIDKey is the key/name of the 'id' queue property.
-const PropIDKey = "id"
+const (
+	// PropUUIDKey is the key/name of the 'uuid' Queue property.
+	PropUUIDKey = "uuid"
+	// PropAddressKey is the key/name of the 'addr' Queue property.
+	PropAddressKey = "addr"
+)
 
 // newQueue constructs a new subscription queue (publisher-side connection).
 func newQueue(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup) *Queue {
@@ -80,6 +85,6 @@ func (q *Queue) Send(v interface{}) error {
 	case q.ch <- v:
 		return nil
 	default:
-		return fmt.Errorf("subscription queue '%s' is full", q.props[PropIDKey])
+		return fmt.Errorf("subscription queue '%s' is full", q.props[PropUUIDKey].(uuid.Bytes))
 	}
 }

@@ -17,6 +17,8 @@ import (
 	"crypto/rand"
 	"fmt"
 	"io"
+
+	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
 
 // Size is the byte length of a raw UUID.
@@ -39,9 +41,7 @@ func New() Bytes {
 
 // NewFrom constructs a new UUID from a byte slice.
 func NewFrom(src []byte) Bytes {
-	if len(src) != Size {
-		panic(fmt.Errorf("invalid uuid bytes with length %d", len(src)))
-	}
+	check.IsEqual(len(src), Size, "uuid byte length")
 
 	b := make([]byte, Size)
 	copy(b, src)

@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/frames"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/uuid"
 )
 
 const (
@@ -23,6 +25,127 @@ func checkVersion(major uint8, minor uint8) error {
 		return fmt.Errorf("protocol mismatch. version %d.%d required", majorV1, minorV1)
 	}
 	return nil
+}
+
+// pubProtoV1 is version 1.0 of the Pub protocol.
+type pubProtoV1 struct{}
+
+// Greet is called by a Publisher to set up a new connection with a Subscriber.
+func (p *pubProtoV1) Greet(q *core.Queue) error {
+	greeting := greetingV1{
+		Greeting{
+			Signature: ProtocolSignature,
+			Major:     majorV1,
+			Minor:     minorV1,
+		},
+	}
+
+	err := greeting.write(q.Conn())
+	if err != nil {
+		return err
+	}
+
+	ready := readyV1{}
+	err = ready.read(q.Conn())
+	if err != nil {
+		return err
+	}
+
+	q.SetProtocol(p)
+	q.SetProp(core.PropUUIDKey, uuid.NewFrom(ready.props[core.PropUUIDKey]))
+	q.SetProp(propTopicKey, string(ready.props[propTopicKey]))
+
+	return nil
+}
+
+// Send is called to send content to a Subscriber.
+// Only perform the send if the queue is subscribing to the topic.
+func (p *pubProtoV1) Send(q *core.Queue, v interface{}) error {
+	msg := v.(*Message)
+
+	if !p.isQueueSubscribing(q, msg.Topic) {
+		return nil
+	}
+
+	var m messageV1
+	m.topicLen = uint16(len(msg.Topic))
+	m.topic = []byte(msg.Topic)
+	m.bodyLen = uint16(len(msg.Body))
+	m.body = msg.Body
+
+	return m.write(q.Conn())
+}
+
+// Recv is not supported.
+func (p *pubProtoV1) Recv(q *core.Queue) (interface{}, error) {
+	return nil, errors.New("pubProtoV1.Recv: not supported")
+}
+
+func (p *pubProtoV1) isQueueSubscribing(q *core.Queue, topic string) bool {
+	return strings.HasPrefix(q.Prop(propTopicKey).(string), topic)
+}
+
+// subProtoV1 is version 1.0 of the Sub protocol.
+type subProtoV1 struct{}
+
+// Greet is called by a Subscriber to respond to a Publisher's Greeting,
+// informing the Publisher that it's ready to receive topic messages/data.
+//
+// TODO: support multiple topics(?)
+func (s *subProtoV1) Greet(q *core.Queue) error {
+	greeting := greetingV1{}
+	err := greeting.read(q.Conn())
+	if err != nil {
+		return err
+	}
+
+	ready := readyV1{
+		Ready: Ready{
+			Major: majorV1,
+			Minor: minorV1,
+		},
+		props: make(map[string][]byte),
+	}
+
+	ready.props[core.PropUUIDKey] = q.Prop(core.PropUUIDKey).(uuid.Bytes)
+	ready.props[propTopicKey] = []byte(q.Prop(propTopicKey).(string))
+
+	return ready.write(q.Conn())
+}
+
+// Send is not supported.
+func (s *subProtoV1) Send(q *core.Queue, v interface{}) error {
+	return errors.New("subProtoV1.Send: not supported")
+}
+
+// Recv is called to receive the message from a Publisher.
+func (s *subProtoV1) Recv(q *core.Queue) (interface{}, error) {
+	msg := messageV1{}
+
+	err := msg.readNull(q.Conn())
+	if err != nil {
+		return nil, err
+	}
+
+	if !msg.hasNull() {
+		errMsg := errorV1{code: msg.null}
+		err = errMsg.readAfterCode(q.Conn())
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, errMsg
+	}
+
+	err = msg.readAfterNull(q.Conn())
+	if err != nil {
+		return nil, err
+	}
+
+	return &Message{
+		Topic: string(msg.topic),
+		Body:  msg.body,
+	}, nil
 }
 
 // A greetingV1 message is the first message sent by a v1.0 publisher to a subscriber.
@@ -74,7 +197,7 @@ func (msg *greetingV1) write(w io.Writer) (err error) {
 type readyV1 struct {
 	Ready
 	propsLen uint16
-	props    map[string]string
+	props    map[string][]byte
 }
 
 // read receives a ready message from a subscription.
@@ -99,6 +222,8 @@ func (msg *readyV1) read(r io.Reader) (err error) {
 		return
 	}
 
+	log.Println("ready msg props len:", msg.propsLen)
+
 	msg.props, err = frames.ReadProps(r, int64(msg.propsLen))
 	return
 }
@@ -106,6 +231,8 @@ func (msg *readyV1) read(r io.Reader) (err error) {
 func (msg *readyV1) write(w io.Writer) (err error) {
 	props := frames.PropsToBytes(msg.props)
 	msg.propsLen = uint16(len(props))
+
+	log.Println("ready msg props len:", msg.propsLen)
 
 	buf := make([]byte, 1+1+2+len(props))
 	bufView := buf
@@ -210,126 +337,4 @@ func (msg *messageV1) write(w io.Writer) (err error) {
 
 	_, err = w.Write(buf)
 	return
-}
-
-// pubProtoV1 is version 1.0 of the Pub protocol.
-type pubProtoV1 struct{}
-
-// Greet is called by a Publisher to set up a new connection with a Subscriber.
-func (p *pubProtoV1) Greet(q *core.Queue) error {
-	greeting := greetingV1{
-		Greeting{
-			Signature: ProtocolSignature,
-			Major:     majorV1,
-			Minor:     minorV1,
-		},
-	}
-
-	err := greeting.write(q.Conn())
-	if err != nil {
-		return err
-	}
-
-	ready := readyV1{}
-	err = ready.read(q.Conn())
-	if err != nil {
-		return err
-	}
-
-	q.SetProtocol(p)
-	q.SetProp(core.PropIDKey, ready.props[core.PropIDKey])
-	q.SetProp(propTopicKey, ready.props[propTopicKey])
-
-	return nil
-}
-
-// Send is called to send content to a Subscriber.
-// Only perform the send if the queue is subscribing to the topic.
-func (p *pubProtoV1) Send(q *core.Queue, v interface{}) error {
-	msg := v.(Message)
-
-	if !p.isQueueSubscribing(q, msg.Topic) {
-		return nil
-	}
-
-	var m messageV1
-	m.topicLen = uint16(len(msg.Topic))
-	m.topic = []byte(msg.Topic)
-	m.bodyLen = uint16(len(msg.Body))
-	m.body = msg.Body
-
-	return m.write(q.Conn())
-}
-
-// Recv is not supported.
-func (p *pubProtoV1) Recv(q *core.Queue) (interface{}, error) {
-	return nil, errors.New("pubProtoV1.Recv: not supported")
-}
-
-func (p *pubProtoV1) isQueueSubscribing(q *core.Queue, topic string) bool {
-	return strings.HasPrefix(q.Prop(propTopicKey).(string), topic)
-}
-
-// subProtoV1 is version 1.0 of the Sub protocol.
-type subProtoV1 struct{}
-
-// Greet is called by a Subscriber to respond to a Publisher's Greeting,
-// informing the Publisher that it's ready to receive topic messages/data.
-//
-// TODO: support multiple topics(?)
-//func (s *subProtoV1) Ready(sub *Subscriber) error {
-func (s *subProtoV1) Greet(q *core.Queue) error {
-	greeting := greetingV1{}
-	err := greeting.read(q.Conn())
-	if err != nil {
-		return err
-	}
-
-	ready := readyV1{
-		Ready: Ready{
-			Major: majorV1,
-			Minor: minorV1,
-		},
-		props: make(map[string]string),
-	}
-
-	ready.props[core.PropIDKey] = q.Prop(core.PropIDKey).(string)
-	ready.props[propTopicKey] = q.Prop(propTopicKey).(string)
-
-	return ready.write(q.Conn())
-}
-
-// Send is not supported.
-func (s *subProtoV1) Send(q *core.Queue, v interface{}) error {
-	return errors.New("subProtoV1.Send: not supported")
-}
-
-// Recv is called to receive the message from a Publisher.
-func (s *subProtoV1) Recv(q *core.Queue) (interface{}, error) {
-	msg := messageV1{}
-
-	err := msg.readNull(q.Conn())
-	if err != nil {
-		return nil, err
-	}
-
-	if !msg.hasNull() {
-		errMsg := errorV1{code: msg.null}
-		err = errMsg.readAfterCode(q.Conn())
-		if err != nil {
-			return nil, err
-		}
-
-		return nil, errMsg
-	}
-
-	err = msg.readAfterNull(q.Conn())
-	if err != nil {
-		return nil, err
-	}
-
-	return &Message{
-		Topic: string(msg.topic),
-		Body:  msg.body,
-	}, nil
 }

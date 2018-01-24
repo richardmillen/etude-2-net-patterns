@@ -20,7 +20,8 @@ const (
 	topicSpanish = "esp"
 )
 
-var port = flag.Int("port", 5678, "Port number to listen at")
+var port = flag.Int("port", 5678, "Port number to listen at.")
+var interval = flag.Int("interval", 100, "Number of milliseconds to pause between each message.")
 
 func init() {
 	rand.Seed(time.Now().Unix())
@@ -42,7 +43,7 @@ func main() {
 
 	for {
 		pub.Publish(nextWord())
-		time.Sleep(time.Millisecond * 100)
+		time.Sleep(time.Millisecond * time.Duration(*interval))
 	}
 }
 

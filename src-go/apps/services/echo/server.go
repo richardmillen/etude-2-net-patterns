@@ -4,10 +4,9 @@ import (
 	"io"
 	"log"
 	"net"
-	"os"
-	"strings"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/uuid"
 )
 
@@ -22,6 +21,7 @@ func NewServer(l net.Listener) *Server {
 		quit:     make(chan bool, 1),
 		stopped:  make(chan bool),
 	}
+
 	go s.run()
 	return s
 }
@@ -87,11 +87,7 @@ func (s *Server) send(w io.Writer, text string) error {
 
 // Addr returns the address of the echo server.
 func (s *Server) Addr() string {
-	host, err := os.Hostname()
-	check.Error(err)
-
-	addr := s.listener.Addr().String()
-	return strings.Replace(addr, "[::]", host, 1)
+	return core.GetEndpointAddress(s.listener.Addr())
 }
 
 // Close quits the server background goroutine and closes the TCP connection.

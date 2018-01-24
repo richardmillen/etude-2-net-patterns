@@ -46,7 +46,7 @@ func ReadBytes(r io.Reader, numBytes int64) ([]byte, error) {
 }
 
 // ReadProps returns a map containing all property name/value pairs.
-func ReadProps(r io.Reader, propsLen int64) (map[string]string, error) {
+func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 	reader := io.LimitReader(r, propsLen)
 	buf := make([]byte, propsLen)
 
@@ -59,7 +59,7 @@ func ReadProps(r io.Reader, propsLen int64) (map[string]string, error) {
 		readBytes += n
 	}
 
-	props := make(map[string]string)
+	props := make(map[string][]byte)
 	var pair []*bytes.Buffer
 
 	beginPair := func() {
@@ -70,7 +70,7 @@ func ReadProps(r io.Reader, propsLen int64) (map[string]string, error) {
 	beginPair()
 	for n := 0; n < len(buf); n++ {
 		if buf[n] == '\n' {
-			props[pair[0].String()] = pair[1].String()
+			props[pair[0].String()] = pair[1].Bytes()
 			if n == len(buf) {
 				break
 			}
@@ -88,9 +88,9 @@ func ReadProps(r io.Reader, propsLen int64) (map[string]string, error) {
 
 	if pair[0].Len() > 0 {
 		if len(pair) == 2 {
-			props[pair[0].String()] = pair[1].String()
+			props[pair[0].String()] = pair[1].Bytes()
 		} else {
-			props[pair[0].String()] = ""
+			props[pair[0].String()] = make([]byte, 0)
 		}
 	}
 

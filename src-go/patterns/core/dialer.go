@@ -4,8 +4,6 @@ import (
 	"net"
 	"sync"
 	"time"
-
-	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
 
 // DefDialerTimeout is the default timeout value used by a Dialer.
@@ -14,47 +12,59 @@ const DefDialerTimeout = time.Second
 // NewDialer constructs a new connection Dialer.
 func NewDialer(network, address string) *Dialer {
 	return &Dialer{
-		Network: network,
-		Address: address,
+		Network:    network,
+		RemoteAddr: address,
+		EP:         NewHostEndpoint(),
+		q:          make([]*Queue, 1),
+		quit:       make(chan bool),
 		Dialer: net.Dialer{
 			Timeout: DefDialerTimeout,
 		},
-		q: make([]*Queue, 1),
 	}
 }
 
 // A Dialer enables an endpoint to connect to another endpoint.
 type Dialer struct {
 	net.Dialer
-	Network   string
-	Address   string
-	QueueSize uint
-	proto     StreamProtocol
-	q         []*Queue
-	quit      chan bool
-	wg        sync.WaitGroup
+	Network    string
+	RemoteAddr string
+	EP         *Endpoint
+	QueueSize  uint
+	q          []*Queue
+	connFunc   ConnectFunc
+	proto      StreamProtocol
+	quit       chan bool
+	wg         sync.WaitGroup
 }
 
-// Open is called to initialise the Dialer with a protocol.
+// Open is called to initialise the Dialer with a protocol and connect.
+//
+// An id is often used so the remote Endpoint is able to uniquely identify this
+// Connector (local Endpoint).
 func (d *Dialer) Open(proto StreamProtocol) error {
 	d.proto = proto
 
-	conn, err := d.Dial(d.Network, d.Address)
+	conn, err := d.Dial(d.Network, d.RemoteAddr)
 	if err != nil {
 		return err
 	}
+	d.EP.Addr = GetEndpointAddress(conn.LocalAddr())
 
 	d.wg.Add(1)
 	d.q[0] = newQueue(conn, d.QueueSize, d.quit, &(d.wg))
 
-	go func() {
-		err = d.proto.Greet(d.q[0])
-		if check.Log(err) {
-			return
-		}
-	}()
+	d.q[0].SetProp(PropUUIDKey, d.EP.UUID)
+	d.q[0].SetProp(PropAddressKey, d.EP.Addr)
 
-	return nil
+	if d.connFunc != nil {
+		err = d.connFunc(d.q[0])
+		if err != nil {
+			return err
+		}
+	}
+
+	err = d.proto.Greet(d.q[0])
+	return err
 }
 
 // GetQueues returns a slice of active endpoint Queues.
@@ -71,4 +81,9 @@ func (d *Dialer) Close() error {
 	close(d.quit)
 	d.wg.Wait()
 	return nil
+}
+
+// OnConnect sets a ConnectFunc to be invoked whenever a new connection Queue is created.
+func (d *Dialer) OnConnect(connFunc ConnectFunc) {
+	d.connFunc = connFunc
 }

@@ -11,10 +11,24 @@ func IsFalse(v bool, name string) {
 	}
 }
 
-// IsGreaterEqual panics if v1 isn't greater than or equal to v2.
-func IsGreaterEqual(v1 int, v2 int, hint string) {
-	if v1 < v2 {
-		log.Fatalf("%s equal to %d. expected greater than or equal to %d\n", hint, v1, v2)
+// IsEqual panics if a isn't equal to b.
+func IsEqual(a int, b int, hint string) {
+	if a != b {
+		log.Fatalf("%s equal to %d. expected equal to %d\n", hint, a, b)
+	}
+}
+
+// IsGreater panics if a isn't greater than b.
+func IsGreater(a int, b int, hint string) {
+	if a <= b {
+		log.Fatalf("%s equal to %d. expected greater than %d\n", hint, a, b)
+	}
+}
+
+// IsGreaterEqual panics if a isn't greater than or equal to b.
+func IsGreaterEqual(a int, b int, hint string) {
+	if a < b {
+		log.Fatalf("%s equal to %d. expected greater than or equal to %d\n", hint, a, b)
 	}
 }
 
