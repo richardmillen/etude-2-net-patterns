@@ -1,19 +1,25 @@
-package pubsub
+package core
 
 import (
 	"fmt"
 	"io"
 	"net"
-	"strings"
 	"sync"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
 
+// DefQueueSize is intended to be used as the default size for connection Queues.
+const DefQueueSize = 10
+
+// PropIDKey is the key/name of the 'id' queue property.
+const PropIDKey = "id"
+
 // newQueue constructs a new subscription queue (publisher-side connection).
 func newQueue(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup) *Queue {
 	q := &Queue{conn: conn, quit: quit, wg: wg}
-	q.ch = make(chan Message, queueSize)
+	q.props = make(map[string]interface{})
+	q.ch = make(chan interface{}, queueSize)
 	q.err = make(chan error)
 	go q.run()
 	return q
@@ -22,10 +28,9 @@ func newQueue(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup)
 // Queue handles a subscriber connection on the Publisher.
 type Queue struct {
 	conn  net.Conn
-	proto PubProtocol
-	id    string
-	topic string
-	ch    chan Message
+	proto StreamProtocol
+	props map[string]interface{}
+	ch    chan interface{}
 	err   chan error
 	quit  chan bool
 	wg    *sync.WaitGroup
@@ -38,17 +43,18 @@ func (q *Queue) Conn() io.ReadWriteCloser {
 }
 
 // SetProtocol is called to provide a queue with a version of the Pub protocol.
-func (q *Queue) SetProtocol(p PubProtocol) {
-	q.proto = p
+func (q *Queue) SetProtocol(proto StreamProtocol) {
+	q.proto = proto
 }
 
-// SetProps is called to set properties of the queue.
-//
-// TODO: surely the queue shouldn't be reading properties that could become
-// version-specific.
-func (q *Queue) SetProps(p map[string]string) {
-	q.id = p[propIDKey]
-	q.topic = p[propTopicKey]
+// Prop returns the value of a property on the queue.
+func (q *Queue) Prop(key string) interface{} {
+	return q.props[key]
+}
+
+// SetProp is called to set a property on the queue.
+func (q *Queue) SetProp(key string, value interface{}) {
+	q.props[key] = value
 }
 
 func (q *Queue) run() {
@@ -58,12 +64,8 @@ func (q *Queue) run() {
 		select {
 		case <-q.quit:
 			return
-		case m := <-q.ch:
-			if !q.subscribing(m.Topic) {
-				break
-			}
-
-			err := q.proto.Send(q.conn, &m)
+		case v := <-q.ch:
+			err := q.proto.Send(q, v)
 			if check.Log(err) {
 				q.err <- err
 				return
@@ -72,15 +74,12 @@ func (q *Queue) run() {
 	}
 }
 
-func (q *Queue) subscribing(topic string) bool {
-	return strings.HasPrefix(topic, q.topic)
-}
-
-func (q *Queue) send(m *Message) error {
+// Send is called to pass data to a connection Queue.
+func (q *Queue) Send(v interface{}) error {
 	select {
-	case q.ch <- *m:
+	case q.ch <- v:
 		return nil
 	default:
-		return fmt.Errorf("subscription queue '%s' is full", q.id)
+		return fmt.Errorf("subscription queue '%s' is full", q.props[PropIDKey])
 	}
 }

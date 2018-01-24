@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub"
 )
 
@@ -32,7 +33,7 @@ func main() {
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", *port))
 	check.Error(err)
 
-	listener, err := net.ListenTCP("tcp", addr)
+	listener, err := core.ListenTCP("tcp", addr)
 	check.Error(err)
 	defer listener.Close()
 

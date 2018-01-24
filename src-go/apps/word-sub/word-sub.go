@@ -4,13 +4,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
 	"log"
-	"net"
 	"os"
-	"time"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub"
 )
 
@@ -41,14 +39,17 @@ func main() {
 	id := getID()
 	log.Printf("starting word subscriber app (id: %s)...\n", id)
 
-	sub := pubsub.NewSubscriber(id)
+	d := core.NewDialer("tcp", fmt.Sprintf("%s:%d", *server, *port))
+	defer d.Close()
+
+	sub := pubsub.NewSubscriber(id, d)
 	defer sub.Close()
 
 	log.Printf("subscribing to %d '%s' words...\n", *wordCount, *topic)
 	finished := make(chan bool)
 	n := 0
 
-	check.Must(sub.Subscribe(connect, func(m *pubsub.Message) (err error) {
+	check.Must(sub.Subscribe(func(m *pubsub.Message) (err error) {
 		log.Printf("%s: %s\n", m.Topic, string(m.Body))
 
 		if n++; n == *wordCount {
@@ -63,17 +64,6 @@ func main() {
 	<-finished
 
 	log.Println("done.")
-}
-
-// connect opens a connection to a Publisher.
-func connect() (io.ReadWriteCloser, error) {
-	log.Printf("connecting to %s:%d...\n", *server, *port)
-
-	d := net.Dialer{
-		Timeout: time.Second,
-	}
-
-	return d.Dial("tcp", fmt.Sprintf("%s:%d", *server, *port))
 }
 
 func getID() string {

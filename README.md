@@ -2,6 +2,17 @@
 
 A study of networking patterns over TCP & UDP, with implementations in Go & C++.
 
+## Pub-Sub
+
+> Publisher sends a stream of messages.  
+> Subscriber receives messages related to one, or more topics.  
+
++ REQ-REP subscriber sync
++ Topic envelope / frame
++ Last-value caching (LVC)
++ high water mark (HWM)
++ timestamps; abort threshold / latency
+
 ## Service Discovery
 
 ### UDP Surveys
@@ -19,17 +30,6 @@ A study of networking patterns over TCP & UDP, with implementations in Go & C++.
 + message
   - header: "FOO1"
   - body: service TCP port
-
-## Pub-Sub
-
-> Publisher sends a stream of messages.  
-> Subscriber receives messages related to one, or more topics.  
-
-+ REQ-REP subscriber sync
-+ Topic envelope / frame
-+ Last-value caching (LVC)
-+ high water mark (HWM)
-+ timestamps; abort threshold / latency
 
 ## Broker
 

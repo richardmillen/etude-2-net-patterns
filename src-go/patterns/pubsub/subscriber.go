@@ -6,9 +6,8 @@ import (
 	"log"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
-
-const inQueueSize = 10
 
 // ConnectFunc is called by a Subscriber to connect to a Publisher.
 type ConnectFunc func() (io.ReadWriteCloser, error)
@@ -16,82 +15,83 @@ type ConnectFunc func() (io.ReadWriteCloser, error)
 // SubscribeFunc is called by a Subscriber when a message is received from a Publisher.
 type SubscribeFunc func(*Message) error
 
-// NewSubscriber returns a new Subscriber that will subscribe to topics
-// published by an io.ReadWriter.
-func NewSubscriber(id string) *Subscriber {
+// NewSubscriber returns a new Subscriber that will subscribe to topics published by an io.ReadWriter.
+// The id is required so that the Publisher is able to uniquely identify the subscriber.
+// The Connector may be a valid core.Dialer, or core.Listener.
+func NewSubscriber(id string, c core.Connector) *Subscriber {
 	sub := &Subscriber{id: id}
-	sub.ch = make(chan Message, inQueueSize)
-	sub.quit = make(chan bool)
+	sub.connector = c
 	sub.proto = &subProtoV1{}
+	sub.ch = make(chan Message, core.DefQueueSize)
+	sub.quit = make(chan bool, 1)
+	sub.finished = make(chan bool)
 	return sub
 }
 
 // Subscriber subscribes to topics published by a Publisher.
 type Subscriber struct {
-	id       string
-	ch       chan Message
-	proto    SubProtocol
-	conn     io.ReadWriteCloser
-	connFunc ConnectFunc
-	subFunc  SubscribeFunc
-	quit     chan bool
-	topics   []string
+	id        string
+	ch        chan Message
+	connector core.Connector
+	proto     SubProtocol
+	subFunc   SubscribeFunc
+	topics    []string
+	quit      chan bool
+	finished  chan bool
 }
 
 // run is the engine of the Subscriber.
 func (sub *Subscriber) run() {
-	defer log.Println("subscriber done.")
+	defer func() {
+		log.Println("subscriber done.")
+		sub.finished <- true
+	}()
 
-	check.Must(sub.proto.Ready(sub))
+	check.Must(sub.connector.Open(&pubProtoV1{}))
 
 	for {
 		select {
 		case <-sub.quit:
 			return
 		default:
-			m, err := sub.proto.Recv(sub.conn)
-			check.Error(err)
+			queues := sub.connector.GetQueues()
+			for _, q := range queues {
+				m, err := sub.proto.Recv(q)
+				if !check.Log(err) {
+					continue
+				}
 
-			check.Must(sub.subFunc(m))
+				check.Must(sub.subFunc(m.(*Message)))
+			}
 		}
 	}
 }
 
 // Subscribe receives data from one or more publishers.
+//
 // TODO: cater for multiple calls and from multiple goroutines.
 // TODO: how to cater for Close() then Subscribe() ?
-func (sub *Subscriber) Subscribe(connFunc ConnectFunc, subFunc SubscribeFunc, topics ...string) (err error) {
+func (sub *Subscriber) Subscribe(subFunc SubscribeFunc, topics ...string) (err error) {
 	if sub.topics != nil {
 		err = errors.New("already subscribing")
 		return
 	}
 
+	sub.subFunc = subFunc
 	sub.topics = make([]string, len(topics))
 	copy(sub.topics, topics)
-
-	sub.connFunc = connFunc
-	sub.subFunc = subFunc
-
-	sub.conn, err = sub.connFunc()
-	if err != nil {
-		return
-	}
 
 	go sub.run()
 
 	return
 }
 
-// Close is called to close any open connections to a Publisher.
-func (sub *Subscriber) Close() (err error) {
-	if sub.conn != nil {
-		select {
-		case sub.quit <- true:
-		default:
-		}
+// Close is called to close any open connections and invalidate the Subscriber.
+func (sub *Subscriber) Close() error {
+	defer func() {
+		<-sub.finished
+	}()
 
-		err = sub.conn.Close()
-		sub.conn = nil
-	}
-	return
+	sub.quit <- true
+	return sub.connector.Close()
 }

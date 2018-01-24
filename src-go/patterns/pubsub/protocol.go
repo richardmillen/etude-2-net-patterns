@@ -1,42 +1,35 @@
 package pubsub
 
 import (
-	"io"
-
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
 
 // ProtocolSignature is used to identify messages belonging to the Pub-Sub protocol.
 // 10101011 11[000001], where [nnnnnn] identifies the protocol.
 var ProtocolSignature = [...]byte{0xAB, 0xC1}
 
-const (
-	// PropIDKey is the identifier of the 'id' message property.
-	propIDKey = "id"
-	// PropTopicKey is the identifier of the 'topic' message property.
-	propTopicKey = "topic"
-)
+// propTopicKey is the identifier of the 'topic' message & queue properties.
+const propTopicKey = "topic"
 
 // PubProtocol is the Publisher-side of the pub-sub wire protocol.
 type PubProtocol interface {
-	Greet(q *Queue) error
-	Send(w io.Writer, m *Message) error
+	core.StreamProtocol
 }
 
 // SubProtocol is the Subscriber-side of the pub-sub wire protocol.
 type SubProtocol interface {
-	Ready(sub *Subscriber) error
-	Recv(r io.Reader) (*Message, error)
+	core.StreamProtocol
 }
 
-// Greeting is a message sent by a Publisher immediately after a subscriber connects.
+// A Greeting is the first message sent by a Publisher to a Subscriber.
 type Greeting struct {
 	Signature [2]byte
 	Major     uint8
 	Minor     uint8
 }
 
-// Ready is a message sent by a Subscriber in response to a greeting.
+// A Ready message is sent by a Subscriber in response to a Greeting.
 type Ready struct {
 	Major uint8
 	Minor uint8

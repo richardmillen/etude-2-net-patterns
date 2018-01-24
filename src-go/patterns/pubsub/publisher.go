@@ -3,20 +3,19 @@ package pubsub
 import (
 	"errors"
 	"log"
-	"net"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
-
-const outQueueSize = 10
 
 // NewPublisher returns a new Publisher that will publish messages to Subscriber's.
 // TODO: figure out good way to set queue size without cluttering the API.
-func NewPublisher(lnr net.Listener) *Publisher {
-	pub := &Publisher{lnr: newListener(lnr, outQueueSize)}
+func NewPublisher(c core.Connector) *Publisher {
+	pub := &Publisher{connector: c}
 
 	pub.ch = make(chan Message, 1)
-	pub.quit = make(chan bool)
+	pub.quit = make(chan bool, 1)
+	pub.finished = make(chan bool)
 
 	go pub.run()
 	return pub
@@ -24,24 +23,30 @@ func NewPublisher(lnr net.Listener) *Publisher {
 
 // Publisher sends messages to zero or more Subscriber's.
 type Publisher struct {
-	lnr  *listener
-	ch   chan Message
-	quit chan bool
+	connector core.Connector
+	ch        chan Message
+	quit      chan bool
+	finished  chan bool
 }
 
 // run is the engine of the Publisher.
 // TODO: should we report subscription queue errors to the consumer?
 func (pub *Publisher) run() {
-	defer log.Println("publisher done.")
+	defer func() {
+		log.Println("publisher done.")
+		pub.finished <- true
+	}()
+
+	check.Must(pub.connector.Open(&pubProtoV1{}))
 
 	for {
 		select {
 		case <-pub.quit:
 			return
 		case m := <-pub.ch:
-			qs := pub.lnr.getQueues()
-			for _, q := range qs {
-				err := q.send(&m)
+			queues := pub.connector.GetQueues()
+			for _, q := range queues {
+				err := q.Send(&m)
 				check.Log(err)
 			}
 		}
@@ -58,8 +63,9 @@ func (pub *Publisher) Publish(topic string, content []byte) error {
 	}
 }
 
-// Close closes and invalidates the Publisher.
+// Close is called to stop and invalidate the Publisher.
 func (pub *Publisher) Close() error {
 	pub.quit <- true
+	<-pub.finished
 	return nil
 }
