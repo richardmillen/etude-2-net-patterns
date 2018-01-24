@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
 )
 
 // ReadUInt8 reads a single octet/byte and returns the uint8 value.
@@ -50,6 +51,8 @@ func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 	reader := io.LimitReader(r, propsLen)
 	buf := make([]byte, propsLen)
 
+	log.Println("reading props len:", propsLen)
+
 	readBytes := 0
 	for readBytes < len(buf) {
 		n, err := reader.Read(buf[readBytes:])
@@ -59,6 +62,8 @@ func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 		readBytes += n
 	}
 
+	log.Println("read props into buf.")
+
 	props := make(map[string][]byte)
 	var pair []*bytes.Buffer
 
@@ -66,6 +71,8 @@ func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 		pair = make([]*bytes.Buffer, 1, 2)
 		pair[0] = &bytes.Buffer{}
 	}
+
+	log.Println("building props map...")
 
 	beginPair()
 	for n := 0; n < len(buf); n++ {
@@ -86,6 +93,8 @@ func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 		}
 	}
 
+	log.Println("adding final prop pair if exists...")
+
 	if pair[0].Len() > 0 {
 		if len(pair) == 2 {
 			props[pair[0].String()] = pair[1].Bytes()
@@ -93,6 +102,8 @@ func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 			props[pair[0].String()] = make([]byte, 0)
 		}
 	}
+
+	log.Println("props map built.")
 
 	return props, nil
 }
