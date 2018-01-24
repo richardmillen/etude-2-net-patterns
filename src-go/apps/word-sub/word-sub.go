@@ -49,6 +49,11 @@ func main() {
 	finished := make(chan bool)
 	n := 0
 
+	sub.Error(func(err error) {
+		log.Println("subscriber error:", err)
+		finished <- true
+	})
+
 	sub.Subscribe(func(m *pubsub.Message) (err error) {
 		log.Printf("%s: %s\n", m.Topic, string(m.Body))
 

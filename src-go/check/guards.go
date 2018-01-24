@@ -11,6 +11,13 @@ func IsFalse(v bool, name string) {
 	}
 }
 
+// IsNotEqual panics if a is equal to b.
+func IsNotEqual(a int, b int, hint string) {
+	if a == b {
+		log.Fatalf("%s equal to %d. expected not equal to %d\n", hint, a, b)
+	}
+}
+
 // IsEqual panics if a isn't equal to b.
 func IsEqual(a int, b int, hint string) {
 	if a != b {

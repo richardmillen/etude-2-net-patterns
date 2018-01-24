@@ -1,19 +1,21 @@
 package pubsub
 
 import (
-	"io"
 	"log"
-	"net"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
 
 // ConnectFunc is called by a Subscriber to connect to a Publisher.
-type ConnectFunc func() (io.ReadWriteCloser, error)
+//type ConnectFunc func() (io.ReadWriteCloser, error)
 
 // SubscribeFunc is called by a Subscriber when a message is received from a Publisher.
 type SubscribeFunc func(*Message) error
+
+// ErrorFunc is called by a Subscriber when an error occurs during processing.
+type ErrorFunc func(error)
 
 // NewSubscriber returns a new Subscriber that will subscribe to topics published by an io.ReadWriter.
 // The Connector may be a valid core.Dialer, or core.Listener.
@@ -40,11 +42,14 @@ type Subscriber struct {
 	connector core.Connector
 	proto     SubProtocol
 	subFunc   SubscribeFunc
+	errFunc   ErrorFunc
 	quit      chan bool
 	finished  chan bool
 }
 
 // run is the engine of the Subscriber.
+//
+// TODO: handle connection errors by retrying.
 func (sub *Subscriber) run() {
 	defer func() {
 		log.Println("subscriber done.")
@@ -61,23 +66,23 @@ func (sub *Subscriber) run() {
 			queues := sub.connector.GetQueues()
 			for _, q := range queues {
 				m, err := sub.proto.Recv(q)
-
-				if err == io.EOF {
-					log.Println("error: lost connection to publisher. aborting...")
-					return
-				}
+				err = patterns.Error(err)
 
 				switch err.(type) {
-				case *net.OpError:
-					log.Printf("error: publisher has gone offline. %s. aborting...\n", err)
+				case patterns.ErrOffline:
+					log.Printf("error: %s. aborting...\n", err)
+					return
+				case patterns.ErrConnLost:
+					log.Printf("error: %s. aborting...", err)
 					return
 				case nil:
-					if check.Log(sub.subFunc(m.(*Message))) {
-						return
-					}
 				default:
 					check.Log(err)
 					continue
+				}
+
+				if check.Log(sub.subFunc(m.(*Message))) {
+					return
 				}
 			}
 		}
@@ -92,11 +97,18 @@ func (sub *Subscriber) onNewConn(q *core.Queue) error {
 	return nil
 }
 
+// Error receives a runtime error if one should occur while subscribing.
+func (sub *Subscriber) Error(errFunc ErrorFunc) {
+	sub.errFunc = errFunc
+}
+
 // Subscribe receives data from one or more publishers.
 //
 // TODO: cater for multiple calls and from multiple goroutines.
 // TODO: how to cater for Close() then Subscribe() ?
 func (sub *Subscriber) Subscribe(subFunc SubscribeFunc) {
+	check.IsNotNil(subFunc, "subscription function")
+
 	sub.subFunc = subFunc
 	go sub.run()
 }

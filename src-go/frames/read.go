@@ -1,11 +1,9 @@
 package frames
 
 import (
-	"bytes"
 	"encoding/binary"
 	"fmt"
 	"io"
-	"log"
 )
 
 // ReadUInt8 reads a single octet/byte and returns the uint8 value.
@@ -46,69 +44,7 @@ func ReadBytes(r io.Reader, numBytes int64) ([]byte, error) {
 	return frame, nil
 }
 
-// ReadProps returns a map containing all property name/value pairs.
-func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
-	reader := io.LimitReader(r, propsLen)
-	buf := make([]byte, propsLen)
-
-	log.Println("reading props len:", propsLen)
-
-	readBytes := 0
-	for readBytes < len(buf) {
-		n, err := reader.Read(buf[readBytes:])
-		if err != nil {
-			return nil, err
-		}
-		readBytes += n
-	}
-
-	log.Println("read props into buf.")
-
-	props := make(map[string][]byte)
-	var pair []*bytes.Buffer
-
-	beginPair := func() {
-		pair = make([]*bytes.Buffer, 1, 2)
-		pair[0] = &bytes.Buffer{}
-	}
-
-	log.Println("building props map...")
-
-	beginPair()
-	for n := 0; n < len(buf); n++ {
-		if buf[n] == '\n' {
-			props[pair[0].String()] = pair[1].Bytes()
-			if n == len(buf) {
-				break
-			}
-			beginPair()
-		} else if buf[n] == ':' {
-			pair = append(pair, &bytes.Buffer{})
-			// assume trailing space; jump over it:
-			n++
-		} else if len(pair) == 1 {
-			pair[0].WriteByte(buf[n])
-		} else if len(pair) == 2 {
-			pair[1].WriteByte(buf[n])
-		}
-	}
-
-	log.Println("adding final prop pair if exists...")
-
-	if pair[0].Len() > 0 {
-		if len(pair) == 2 {
-			props[pair[0].String()] = pair[1].Bytes()
-		} else {
-			props[pair[0].String()] = make([]byte, 0)
-		}
-	}
-
-	log.Println("props map built.")
-
-	return props, nil
-}
-
-// readInt read 'n' bytes from a message frame and returns the value as a uint64.
+// readUInt read 'n' bytes from a message frame and returns the value as a uint64.
 func readUInt(r io.Reader, numBytes uint8) (uint64, error) {
 	buf := make([]byte, numBytes)
 	lenReader := io.LimitReader(r, int64(numBytes))
