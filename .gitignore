@@ -10,6 +10,7 @@
 *.vbw
 *.log
 *.tmp
+*.test
 
 bin
 Relase
