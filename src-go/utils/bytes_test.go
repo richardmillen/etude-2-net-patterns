@@ -73,42 +73,42 @@ var testCases = []struct {
 		desc:     "a starts with singular b",
 		a:        []byte{1, 2, 3, 4},
 		b:        []byte{1},
-		expected: false,
+		expected: true,
 		index:    0,
 	},
 	{
 		desc:     "a contains singular b",
 		a:        []byte{1, 2, 3, 4},
 		b:        []byte{2},
-		expected: false,
+		expected: true,
 		index:    1,
 	},
 	{
 		desc:     "a ends with singular b",
 		a:        []byte{1, 2, 3, 4},
 		b:        []byte{4},
-		expected: false,
+		expected: true,
 		index:    3,
 	},
 	{
 		desc:     "a starts with b",
 		a:        []byte{1, 2, 3, 4},
 		b:        []byte{1, 2},
-		expected: false,
+		expected: true,
 		index:    0,
 	},
 	{
 		desc:     "a contains b",
 		a:        []byte{1, 2, 3, 4},
 		b:        []byte{2, 3},
-		expected: false,
+		expected: true,
 		index:    1,
 	},
 	{
 		desc:     "a ends with b",
 		a:        []byte{1, 2, 3, 4},
 		b:        []byte{3, 4},
-		expected: false,
+		expected: true,
 		index:    2,
 	},
 	{
@@ -129,7 +129,7 @@ var testCases = []struct {
 		desc:     "a and b match",
 		a:        []byte{1, 2, 3, 4},
 		b:        []byte{1, 2, 3, 4},
-		expected: false,
+		expected: true,
 		index:    0,
 	},
 	{
@@ -143,7 +143,7 @@ var testCases = []struct {
 
 func TestIsAt(t *testing.T) {
 	for _, tc := range testCases {
-		actual := utils.IsAt(tc.index, tc.a, tc.b...)
+		actual := utils.IsAt(tc.a, tc.b, tc.index)
 		if actual != tc.expected {
 			t.Errorf("%s: expected %v, got %v", tc.desc, tc.expected, actual)
 		}
