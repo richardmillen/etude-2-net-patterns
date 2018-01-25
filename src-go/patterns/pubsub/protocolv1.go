@@ -229,7 +229,10 @@ func (msg *readyV1) read(r io.Reader) (err error) {
 }
 
 func (msg *readyV1) write(w io.Writer) (err error) {
-	props := frames.PropsToBytes(msg.props)
+	props, err := frames.PropsToBytes(msg.props)
+	if err != nil {
+		return
+	}
 	msg.propsLen = uint16(len(props))
 
 	log.Println("ready msg props len:", msg.propsLen)

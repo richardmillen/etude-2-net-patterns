@@ -19,128 +19,146 @@ var testCases = []struct {
 		name:     "Empty",
 		err:      nil,
 		bytesStr: "",
-		props:    map[string][]byte{},
+		props:    nil,
 	},
 	{
 		name:     "SingleEmptyProperty",
-		err:      nil,
-		bytesStr: "",
+		err:      frames.ErrNoPropKey,
+		bytesStr: fmt.Sprintf("%s%s", frames.KeyValueSep, frames.PropTerm),
+		props:    map[string][]byte{"": {}},
+	},
+	{
+		name: "SinglePropertyEmptyValue",
+		err:  nil,
+		bytesStr: fmt.Sprintf("%s%s%s",
+			"abc", frames.KeyValueSep, frames.PropTerm),
 		props: map[string][]byte{
-			"": []byte{},
+			"abc": {},
 		},
 	},
 	{
-		name:     "SinglePropertyEmptyValue",
-		err:      nil,
-		bytesStr: fmt.Sprintf("abc%s%s", frames.KeyValueSep, frames.PropTerm),
+		name: "SinglePropertyWithValue",
+		err:  nil,
+		bytesStr: fmt.Sprintf("%s%s%s%s",
+			"abc", frames.KeyValueSep, []byte{1, 2, 3}, frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{},
-		},
-	},
-	{
-		name:     "SinglePropertyWithValue",
-		err:      nil,
-		bytesStr: fmt.Sprintf("abc%s%s%s", frames.KeyValueSep, []byte{1, 2, 3}, frames.PropTerm),
-		props: map[string][]byte{
-			"abc": []byte{1, 2, 3},
+			"abc": {1, 2, 3},
 		},
 	},
 	{
 		name: "MultiplePropertiesEmptyValues",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%sdef%s%s",
-			frames.KeyValueSep, frames.PropTerm,
-			frames.KeyValueSep, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s%s",
+			"abc", frames.KeyValueSep, frames.PropTerm,
+			"def", frames.KeyValueSep, frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{},
-			"def": []byte{},
+			"abc": {},
+			"def": {},
 		},
 	},
 	{
 		name: "MultiplePropertiesFirstWithEmptyValue",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%sdef%s%s%s",
-			frames.KeyValueSep, frames.PropTerm,
-			frames.KeyValueSep, []byte{4, 5, 6}, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s%s%s",
+			"abc", frames.KeyValueSep, frames.PropTerm,
+			"def", frames.KeyValueSep, []byte{4, 5, 6}, frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{},
-			"def": []byte{4, 5, 6},
+			"abc": {},
+			"def": {4, 5, 6},
 		},
 	},
 	{
 		name: "MultiplePropertiesLastWithEmptyValue",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%s%sdef%s%s",
-			frames.KeyValueSep, []byte{1, 2, 3}, frames.PropTerm,
-			frames.KeyValueSep, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s%s%s",
+			"abc", frames.KeyValueSep, []byte{1, 2, 3}, frames.PropTerm,
+			"def", frames.KeyValueSep, frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{1, 2, 3},
-			"def": []byte{},
+			"abc": {1, 2, 3},
+			"def": {},
 		},
 	},
 	{
 		name: "MultiplePropertiesWithValues",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%s%sdef%s%s%s",
-			frames.KeyValueSep, []byte{1, 2, 3}, frames.PropTerm,
-			frames.KeyValueSep, []byte{4, 5, 6}, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s%s%s%s",
+			"abc", frames.KeyValueSep, []byte{1, 2, 3}, frames.PropTerm,
+			"def", frames.KeyValueSep, []byte{4, 5, 6}, frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{1, 2, 3},
-			"def": []byte{4, 5, 6},
+			"abc": {1, 2, 3},
+			"def": {4, 5, 6},
 		},
 	},
 	{
 		name: "SinglePropertyValueContainsSeparator",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%s%s",
-			frames.KeyValueSep, []byte{1, frames.KeyValueSep[0], frames.KeyValueSep[1], 2, 3}, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s%s",
+			"abc",
+			frames.KeyValueSep,
+			[]byte{1}, frames.KeyValueSep, []byte{2, 3},
+			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{1, frames.KeyValueSep[0], frames.KeyValueSep[1], 2, 3},
+			"abc": {1, frames.KeyValueSep[0], frames.KeyValueSep[1], 2, 3},
 		},
 	},
 	{
 		name: "SinglePropertyValueStartsWithSeparator",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%s%s",
-			frames.KeyValueSep, []byte{frames.KeyValueSep[0], frames.KeyValueSep[1], 1, 2, 3}, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s",
+			"abc",
+			frames.KeyValueSep,
+			frames.KeyValueSep, []byte{1, 2, 3},
+			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{frames.KeyValueSep[0], frames.KeyValueSep[1], 1, 2, 3},
+			"abc": {frames.KeyValueSep[0], frames.KeyValueSep[1], 1, 2, 3},
 		},
 	},
 	{
 		name: "SinglePropertyValueEndsWithSeparator",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%s%s",
-			frames.KeyValueSep, []byte{1, 2, 3, frames.KeyValueSep[0], frames.KeyValueSep[1]}, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s",
+			"abc",
+			frames.KeyValueSep,
+			[]byte{1, 2, 3}, frames.KeyValueSep,
+			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{1, 2, 3, frames.KeyValueSep[0], frames.KeyValueSep[1]},
+			"abc": {1, 2, 3, frames.KeyValueSep[0], frames.KeyValueSep[1]},
 		},
 	},
 	{
 		name: "SinglePropertyValueContainsTerminator",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%s%s",
-			frames.KeyValueSep, []byte{1, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2], 2, 3}, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s%s",
+			"abc",
+			frames.KeyValueSep,
+			[]byte{1}, frames.PropTerm, []byte{2, 3},
+			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{1, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2], 2, 3},
+			"abc": {1, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2], 2, 3},
 		},
 	},
 	{
 		name: "SinglePropertyValueStartsWithTerminator",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%s%s",
-			frames.KeyValueSep, []byte{frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2], 1, 2, 3}, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s",
+			"abc",
+			frames.KeyValueSep,
+			frames.PropTerm, []byte{1, 2, 3},
+			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2], 1, 2, 3},
+			"abc": {frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2], 1, 2, 3},
 		},
 	},
 	{
 		name: "SinglePropertyValueEndsWithTerminator",
 		err:  nil,
-		bytesStr: fmt.Sprintf("abc%s%s%s",
-			frames.KeyValueSep, []byte{1, 2, 3, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2]}, frames.PropTerm),
+		bytesStr: fmt.Sprintf("%s%s%s%s%s",
+			"abc",
+			frames.KeyValueSep,
+			[]byte{1, 2, 3}, frames.PropTerm,
+			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": []byte{1, 2, 3, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2]},
+			"abc": {1, 2, 3, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2]},
 		},
 	},
 }
@@ -149,10 +167,16 @@ func TestProps(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("PropsToBytes_%s", tc.name), func(t *testing.T) {
 			expected := []byte(tc.bytesStr)
-			actual := frames.PropsToBytes(tc.props)
+			actual, err := frames.PropsToBytes(tc.props)
 
+			if err != nil || tc.err != nil {
+				if err != tc.err {
+					t.Errorf("expected error: %v, got: %v", tc.err, err)
+				}
+				return
+			}
 			if !bytes.Equal(actual, expected) {
-				t.Errorf("expected %b, got %b", expected, actual)
+				t.Errorf("expected: %b, got: %b", expected, actual)
 			}
 		})
 	}
@@ -162,11 +186,14 @@ func TestProps(t *testing.T) {
 			r := bytes.NewReader([]byte(tc.bytesStr))
 			actual, err := frames.ReadProps(r, int64(r.Len()))
 
-			if !reflect.DeepEqual(actual, tc.props) {
-				t.Errorf("expected %v,\ngot      %v", tc.props, actual)
+			if err != nil || tc.err != nil {
+				if err != tc.err {
+					t.Errorf("expected error: %v, got: %v", tc.err, err)
+				}
+				return
 			}
-			if err != tc.err {
-				t.Errorf("expected error %v, got %v", tc.err, err)
+			if !reflect.DeepEqual(actual, tc.props) {
+				t.Errorf("expected: %v,\ngot:      %v", tc.props, actual)
 			}
 		})
 	}
