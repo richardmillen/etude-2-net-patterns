@@ -3,6 +3,8 @@ package frames
 import (
 	"bytes"
 	"io"
+
+	"github.com/richardmillen/etude-2-net-patterns/src-go/utils"
 )
 
 var (
@@ -60,26 +62,22 @@ func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 
 	beginPair()
 	for n := 0; n < len(buf); n++ {
-		if isChar(buf, n, PropTerm[0]) &&
-			isChar(buf, n, PropTerm[1]) &&
-			isChar(buf, n, PropTerm[2]) {
-
+		if utils.IsAt(n, buf, PropTerm...) {
 			props[pair[0].String()] = pair[1].Bytes()
 
 			// walk past any trailing delimiter chars:
 			n += 2
-			for isChar(buf, n+1, PropTermChar) {
+			for utils.IsAt(n+1, buf, PropTermChar) {
 				n++
 			}
 			beginPair()
-		} else if isChar(buf, n, KeyValueSep[0]) &&
-			isChar(buf, n+1, KeyValueSep[1]) {
+		} else if utils.IsAt(n, buf, KeyValueSep...) {
 
 			pair = append(pair, &bytes.Buffer{})
 
 			// walk past any trailing spaces:
 			n++
-			for isChar(buf, n+1, SpaceChar) {
+			for utils.IsAt(n+1, buf, SpaceChar) {
 				n++
 			}
 		} else {
@@ -96,11 +94,4 @@ func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 	}
 
 	return props, nil
-}
-
-func isChar(buf []byte, n int, char byte) bool {
-	if n >= len(buf) {
-		return false
-	}
-	return buf[n] == char
 }

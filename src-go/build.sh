@@ -12,6 +12,7 @@ if [[ $1 == "" || $1 == "test" ]]; then
     printf "\t- patterns/core   -\n"
     printf "\t- patterns/disco  -\n"
     printf "\t- patterns/pubsub -\n"
+    printf "\t- utils            -\n"
     printf "\t- uuid            -\n"
     printf "\t- - - - - - - - - -\n"
     printf "\n"
@@ -34,6 +35,11 @@ if [[ $1 == "" || $1 == "test" ]]; then
     cd patterns/pubsub
     go test -v -cover
     cd ../..
+    printf "\n"
+
+    cd utils
+    go test -v -cover
+    cd ..
     printf "\n"
 
     cd uuid
