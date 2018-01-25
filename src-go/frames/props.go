@@ -72,8 +72,8 @@ func ReadProps(r io.Reader, propsLen int64) (map[string][]byte, error) {
 			pair = append(pair, &bytes.Buffer{})
 
 			// walk past any trailing spaces:
-			n += 2
-			for isChar(buf, n, spaceChar) {
+			n++
+			for isChar(buf, n+1, spaceChar) {
 				n++
 			}
 		} else {
