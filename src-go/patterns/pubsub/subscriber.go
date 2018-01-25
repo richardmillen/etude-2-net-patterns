@@ -70,23 +70,30 @@ func (sub *Subscriber) run() {
 
 				switch err.(type) {
 				case patterns.ErrOffline:
-					log.Printf("error: %s. aborting...\n", err)
+					sub.safeErrorFunc(err)
 					return
 				case patterns.ErrConnLost:
-					log.Printf("error: %s. aborting...", err)
+					sub.safeErrorFunc(err)
 					return
-				case nil:
 				default:
 					check.Log(err)
 					continue
-				}
-
-				if check.Log(sub.subFunc(m.(*Message))) {
-					return
+				case nil:
+					if check.Log(sub.subFunc(m.(*Message))) {
+						return
+					}
 				}
 			}
 		}
 	}
+}
+
+// safeErrorFunc calls the Subscribers ErrorFunc if it's configured.
+func (sub *Subscriber) safeErrorFunc(err error) {
+	if sub.errFunc == nil {
+		return
+	}
+	sub.errFunc(err)
 }
 
 // onNewConn is invoked by the Subscribers Connector whenever a new connection Queue is created.
@@ -97,12 +104,14 @@ func (sub *Subscriber) onNewConn(q *core.Queue) error {
 	return nil
 }
 
-// Error receives a runtime error if one should occur while subscribing.
+// Error is called to configure the ErrorFunc of a Subscriber,
+// which is executed if a runtime error occurs while subscribing.
 func (sub *Subscriber) Error(errFunc ErrorFunc) {
 	sub.errFunc = errFunc
 }
 
-// Subscribe receives data from one or more publishers.
+// Subscribe is called to configure the SubscribeFunc of a Subscriber,
+// which is executed every time data is received from a Publisher.
 //
 // TODO: cater for multiple calls and from multiple goroutines.
 // TODO: how to cater for Close() then Subscribe() ?

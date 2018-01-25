@@ -6,6 +6,13 @@ fi
 
 cd apps
 
+if [[ $1 == "" || $1 == "uuid-check" ]]; then
+    printf "building 'uuid checker' (uuid-check)...\n"
+    cd uuid-check
+    go build && mv uuid-check ../../../bin/
+    cd ..
+fi
+
 if [[ $1 == "" || $1 == "survey-server" ]]; then
     printf "building 'service discovery' server (survey-server)...\n"
     cd survey-server

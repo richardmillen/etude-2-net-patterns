@@ -27,6 +27,11 @@ const Size = 16
 // Bytes represents the raw (16) bytes of a UUID.
 type Bytes []byte
 
+// Empty returns an empty UUID (all bytes set to zero).
+func Empty() Bytes {
+	return make([]byte, Size)
+}
+
 // New generates a random UUID.
 func New() Bytes {
 	uuid := make([]byte, Size)
