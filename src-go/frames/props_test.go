@@ -33,7 +33,7 @@ var testCases = []struct {
 		bytesStr: fmt.Sprintf("%s%s%s",
 			"abc", frames.KeyValueSep, frames.PropTerm),
 		props: map[string][]byte{
-			"abc": {},
+			"abc": nil,
 		},
 	},
 	{
@@ -52,8 +52,8 @@ var testCases = []struct {
 			"abc", frames.KeyValueSep, frames.PropTerm,
 			"def", frames.KeyValueSep, frames.PropTerm),
 		props: map[string][]byte{
-			"abc": {},
-			"def": {},
+			"abc": nil,
+			"def": nil,
 		},
 	},
 	{
@@ -63,7 +63,7 @@ var testCases = []struct {
 			"abc", frames.KeyValueSep, frames.PropTerm,
 			"def", frames.KeyValueSep, []byte{4, 5, 6}, frames.PropTerm),
 		props: map[string][]byte{
-			"abc": {},
+			"abc": nil,
 			"def": {4, 5, 6},
 		},
 	},
@@ -75,7 +75,7 @@ var testCases = []struct {
 			"def", frames.KeyValueSep, frames.PropTerm),
 		props: map[string][]byte{
 			"abc": {1, 2, 3},
-			"def": {},
+			"def": nil,
 		},
 	},
 	{
@@ -161,11 +161,29 @@ var testCases = []struct {
 			"abc": {1, 2, 3, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2]},
 		},
 	},
+	{
+		name: "SinglePropertyValueContainsMultipleTerminators",
+		err:  nil,
+		bytesStr: fmt.Sprintf("%s%s%s%s%s%s%s%s",
+			"abc",
+			frames.KeyValueSep,
+			[]byte{1}, frames.PropTerm, []byte{2}, frames.PropTerm, []byte{3},
+			frames.PropTerm),
+		props: map[string][]byte{
+			"abc": {
+				1,
+				frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2],
+				2,
+				frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2],
+				3,
+			},
+		},
+	},
 }
 
-func TestProps(t *testing.T) {
+func TestPropsToBytes(t *testing.T) {
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("PropsToBytes_%s", tc.name), func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			expected := []byte(tc.bytesStr)
 			actual, err := frames.PropsToBytes(tc.props)
 
@@ -180,9 +198,11 @@ func TestProps(t *testing.T) {
 			}
 		})
 	}
+}
 
+func TestReadProps(t *testing.T) {
 	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("ReadProps_%s", tc.name), func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			r := bytes.NewReader([]byte(tc.bytesStr))
 			actual, err := frames.ReadProps(r, int64(r.Len()))
 

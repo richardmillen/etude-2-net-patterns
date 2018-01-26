@@ -12,3 +12,21 @@ func IsAt(a, b []byte, at int) bool {
 	}
 	return bytes.Equal(a[at:at+len(b)], b)
 }
+
+// JoinBytes combines multiple byte slices into a single slice.
+func JoinBytes(v ...[]byte) []byte {
+	if v == nil {
+		return nil
+	}
+	if len(v) == 0 {
+		return []byte{}
+	}
+
+	joined := make([]byte, 0, len(v[0])*len(v))
+
+	for _, slice := range v {
+		joined = append(joined, slice...)
+	}
+
+	return joined
+}
