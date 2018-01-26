@@ -22,7 +22,7 @@ var (
 	// KeyValueSep is the complete property key/value separator as a byte slice.
 	KeyValueSep = []byte{KeyValueSepChar, SpaceChar}
 	// PropTerm is the complete property terminator as a byte slice.
-	PropTerm = []byte{PropTermChar, PropTermChar, PropTermChar}
+	PropTerm = []byte{PropTermChar}
 )
 
 var (

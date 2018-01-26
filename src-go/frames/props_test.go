@@ -134,7 +134,7 @@ var testCases = []struct {
 			[]byte{1}, frames.PropTerm, []byte{2, 3},
 			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": {1, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2], 2, 3},
+			"abc": {1, frames.PropTerm[0], 2, 3},
 		},
 	},
 	{
@@ -146,7 +146,7 @@ var testCases = []struct {
 			frames.PropTerm, []byte{1, 2, 3},
 			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": {frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2], 1, 2, 3},
+			"abc": {frames.PropTerm[0], 1, 2, 3},
 		},
 	},
 	{
@@ -158,7 +158,7 @@ var testCases = []struct {
 			[]byte{1, 2, 3}, frames.PropTerm,
 			frames.PropTerm),
 		props: map[string][]byte{
-			"abc": {1, 2, 3, frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2]},
+			"abc": {1, 2, 3, frames.PropTerm[0]},
 		},
 	},
 	{
@@ -172,9 +172,9 @@ var testCases = []struct {
 		props: map[string][]byte{
 			"abc": {
 				1,
-				frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2],
+				frames.PropTerm[0],
 				2,
-				frames.PropTerm[0], frames.PropTerm[1], frames.PropTerm[2],
+				frames.PropTerm[0],
 				3,
 			},
 		},
@@ -182,6 +182,7 @@ var testCases = []struct {
 }
 
 func TestPropsToBytes(t *testing.T) {
+	t.Log("WARNING: See 'TestPropsToBytes is nondeterministic' issue #1")
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			expected := []byte(tc.bytesStr)
