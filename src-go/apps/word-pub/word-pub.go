@@ -29,6 +29,8 @@ func init() {
 }
 
 func main() {
+	flag.Parse()
+
 	log.Printf("starting publisher app (port #%d)...\n", *port)
 
 	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", *port))
