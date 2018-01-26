@@ -15,7 +15,7 @@ import (
 
 var host = flag.String("server", "localhost", "name of log-server hsot.")
 var port = flag.Int("port", 5959, "port number to connect to.")
-var count = flag.Int("count", 100, "number of times run test function.")
+var count = flag.Int("count", 1, "number of times run test function.")
 
 var (
 	alerts    = 0
