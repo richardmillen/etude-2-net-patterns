@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/frames"
@@ -222,8 +221,6 @@ func (msg *readyV1) read(r io.Reader) (err error) {
 		return
 	}
 
-	log.Println("ready msg props len:", msg.propsLen)
-
 	msg.props, err = frames.ReadProps(r, int64(msg.propsLen))
 	return
 }
@@ -234,8 +231,6 @@ func (msg *readyV1) write(w io.Writer) (err error) {
 		return
 	}
 	msg.propsLen = uint16(len(props))
-
-	log.Println("ready msg props len:", msg.propsLen)
 
 	buf := make([]byte, 1+1+2+len(props))
 	bufView := buf
