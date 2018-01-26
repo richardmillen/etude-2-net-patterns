@@ -52,8 +52,6 @@ func (d *Dialer) Open(proto StreamProtocol) error {
 
 	d.wg.Add(1)
 	d.q[0] = newQueue(conn, d.QueueSize, d.quit, &(d.wg))
-
-	d.q[0].SetProp(PropUUIDKey, d.EP.UUID)
 	d.q[0].SetProp(PropAddressKey, d.EP.Addr)
 
 	if d.connFunc != nil {

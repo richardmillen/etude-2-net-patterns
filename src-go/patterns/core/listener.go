@@ -6,7 +6,6 @@ import (
 	"sync"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/uuid"
 )
 
 // ListenTCP constructs a new Listener for a network endpoint.
@@ -20,7 +19,7 @@ func ListenTCP(network string, laddr *net.TCPAddr) (l *Listener, err error) {
 		Listener:  inner,
 		EP:        NewEndpoint(laddr.String()),
 		queueSize: DefQueueSize,
-		queues:    make(map[string]*Queue),
+		queues:    []*Queue{},
 		quit:      make(chan bool),
 	}, nil
 }
@@ -31,7 +30,7 @@ type Listener struct {
 	EP        *Endpoint
 	proto     StreamProtocol
 	queueSize uint
-	queues    map[string]*Queue
+	queues    []*Queue
 	connFunc  ConnectFunc
 	m         sync.Mutex
 	quit      chan bool
@@ -69,7 +68,7 @@ func (l *Listener) Open(proto StreamProtocol) error {
 				}
 
 				l.m.Lock()
-				l.queues[q.Prop(PropUUIDKey).(uuid.Bytes).String()] = q
+				l.queues = append(l.queues, q)
 				l.m.Unlock()
 			}()
 		}
@@ -79,6 +78,8 @@ func (l *Listener) Open(proto StreamProtocol) error {
 }
 
 // GetQueues returns a slice of currently active queues.
+//
+// TODO: write an in-place deletion.
 func (l *Listener) GetQueues() []*Queue {
 	l.m.Lock()
 
@@ -86,16 +87,16 @@ func (l *Listener) GetQueues() []*Queue {
 	for _, q := range l.queues {
 		select {
 		case e := <-q.err:
-			log.Printf("error reported by queue '%s': %s\n", q.Prop(PropUUIDKey).(uuid.Bytes), e)
-			delete(l.queues, q.Prop(PropUUIDKey).(uuid.Bytes).String())
+			log.Printf("error reported by queue '%s': %s\n", q.ID(), e)
 		default:
 			qs = append(qs, q)
 		}
 	}
+	l.queues = qs
 
 	l.m.Unlock()
 
-	return qs
+	return l.queues
 }
 
 // Close is called to close all open connections and stop listening.
@@ -110,5 +111,5 @@ func (l *Listener) Close() error {
 
 // OnConnect sets a ConnectFunc to be invoked whenever a new connection Queue is created.
 func (l *Listener) OnConnect(connFunc ConnectFunc) {
-
+	l.connFunc = connFunc
 }

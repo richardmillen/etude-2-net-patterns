@@ -51,7 +51,7 @@ func (p *pubProtoV1) Greet(q *core.Queue) error {
 	}
 
 	q.SetProtocol(p)
-	q.SetProp(core.PropUUIDKey, uuid.NewFrom(ready.props[core.PropUUIDKey]))
+	q.SetProp(propEndpointIDKey, uuid.NewFrom(ready.props[propEndpointIDKey]))
 	q.SetProp(propTopicKey, string(ready.props[propTopicKey]))
 
 	return nil
@@ -106,7 +106,7 @@ func (s *subProtoV1) Greet(q *core.Queue) error {
 		props: make(map[string][]byte),
 	}
 
-	ready.props[core.PropUUIDKey] = q.Prop(core.PropUUIDKey).(uuid.Bytes)
+	ready.props[propEndpointIDKey] = q.ID()
 	ready.props[propTopicKey] = []byte(q.Prop(propTopicKey).(string))
 
 	return ready.write(q.Conn())

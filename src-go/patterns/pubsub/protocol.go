@@ -9,8 +9,14 @@ import (
 // 10101011 11[000001], where [nnnnnn] identifies the protocol.
 var ProtocolSignature = [...]byte{0xAB, 0xC1}
 
-// propTopicKey is the identifier of the 'topic' message & queue properties.
-const propTopicKey = "topic"
+const (
+	// propIDKey is used as  of the 'id' message property.
+	//propIDKey = "id"
+	// propEndpointIDKey is the identifier of the remote endpoint.
+	propEndpointIDKey = "epid"
+	// propTopicKey is the identifier of the 'topic' message & queue properties.
+	propTopicKey = "topic"
+)
 
 // PubProtocol is the Publisher-side of the pub-sub wire protocol.
 type PubProtocol interface {

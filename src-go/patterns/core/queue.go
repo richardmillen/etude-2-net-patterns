@@ -15,14 +15,19 @@ const DefQueueSize = 10
 
 const (
 	// PropUUIDKey is the key/name of the 'uuid' Queue property.
-	PropUUIDKey = "uuid"
+	//PropUUIDKey = "uuid"
 	// PropAddressKey is the key/name of the 'addr' Queue property.
 	PropAddressKey = "addr"
 )
 
 // newQueue constructs a new subscription queue (publisher-side connection).
 func newQueue(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup) *Queue {
-	q := &Queue{conn: conn, quit: quit, wg: wg}
+	q := &Queue{
+		id:   uuid.New(),
+		conn: conn,
+		quit: quit,
+		wg:   wg,
+	}
 	q.props = make(map[string]interface{})
 	q.ch = make(chan interface{}, queueSize)
 	q.err = make(chan error)
@@ -32,6 +37,7 @@ func newQueue(conn net.Conn, queueSize uint, quit chan bool, wg *sync.WaitGroup)
 
 // Queue handles a subscriber connection on the Publisher.
 type Queue struct {
+	id    uuid.Bytes
 	conn  net.Conn
 	proto StreamProtocol
 	props map[string]interface{}
@@ -40,6 +46,13 @@ type Queue struct {
 	quit  chan bool
 	wg    *sync.WaitGroup
 	m     sync.Mutex
+}
+
+// ID is the unique identifier of the queue
+//
+// TODO: is this even needed?
+func (q *Queue) ID() uuid.Bytes {
+	return q.id
 }
 
 // Conn returns a ReadWriteCloser that represents the connection to the Subscriber.
@@ -85,6 +98,6 @@ func (q *Queue) Send(v interface{}) error {
 	case q.ch <- v:
 		return nil
 	default:
-		return fmt.Errorf("subscription queue '%s' is full", q.props[PropUUIDKey].(uuid.Bytes))
+		return fmt.Errorf("connection queue '%s' is full", q.id)
 	}
 }
