@@ -61,31 +61,42 @@ func (sub *Subscriber) run() {
 	for {
 		select {
 		case <-sub.quit:
+			core.CloseConnectedQueues(sub.connector)
 			return
 		default:
-			queues := sub.connector.GetQueues()
-			for _, q := range queues {
-				m, err := sub.proto.Recv(q)
-				err = patterns.Error(err)
-
-				switch err.(type) {
-				case patterns.ErrOffline:
-					sub.callErrorFunc(err)
-					return
-				case patterns.ErrConnLost:
-					sub.callErrorFunc(err)
-					return
-				default:
-					check.Log(err)
-					return
-				case nil:
-					if check.Log(sub.subFunc(m.(*Message))) {
-						return
-					}
-				}
+			err := sub.recv()
+			if err != nil {
+				return
 			}
 		}
 	}
+}
+
+func (sub *Subscriber) recv() (err error) {
+	queues := sub.connector.GetQueues()
+	for _, q := range queues {
+		var m interface{}
+
+		m, err = sub.proto.Recv(q)
+		err = patterns.Error(err)
+
+		switch err.(type) {
+		case patterns.ErrOffline:
+			sub.callErrorFunc(err)
+			return
+		case patterns.ErrConnLost:
+			sub.callErrorFunc(err)
+			return
+		default:
+			check.Log(err)
+			return
+		case nil:
+			if check.Log(sub.subFunc(m.(*Message))) {
+				return
+			}
+		}
+	}
+	return
 }
 
 // callErrorFunc calls the Subscribers ErrorFunc if it's configured.

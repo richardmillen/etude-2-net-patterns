@@ -46,6 +46,8 @@ func main() {
 	for n := 0; n < *count; n++ {
 		foo(pub)
 	}
+
+	time.Sleep(time.Second)
 }
 
 func foo(pub *pubsub.Publisher) {

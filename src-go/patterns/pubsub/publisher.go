@@ -2,18 +2,22 @@ package pubsub
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"sync"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
 
 // NewPublisher returns a new Publisher that will publish messages to Subscriber's.
+//
 // TODO: figure out good way to set queue size without cluttering the API.
 func NewPublisher(c core.Connector) *Publisher {
 	pub := &Publisher{connector: c}
 
-	pub.ch = make(chan Message, 1)
+	pub.connector.OnConnect(pub.onNewConn)
+	pub.ch = make(chan Message, core.DefQueueSize)
 	pub.quit = make(chan bool, 1)
 	pub.finished = make(chan bool)
 
@@ -27,6 +31,7 @@ type Publisher struct {
 	ch        chan Message
 	quit      chan bool
 	finished  chan bool
+	wgSend    sync.WaitGroup
 }
 
 // run is the engine of the Publisher.
@@ -57,34 +62,60 @@ func (pub *Publisher) run() {
 	for {
 		select {
 		case m := <-pub.ch:
-			queues := pub.connector.GetQueues()
-			for _, q := range queues {
-				err := q.Send(&m)
-				check.Log(err)
-			}
-		default:
-			select {
-			case <-pub.quit:
-				return
-			}
+			pub.sendToQueues(&m)
+		case <-pub.quit:
+			core.CloseConnectedQueues(pub.connector)
+			return
 		}
 	}
 }
 
+// sendToQueues is called to send a message to all active Queues.
+func (pub *Publisher) sendToQueues(m *Message) {
+	defer func() {
+		log.Println("Publisher.sendToQueues: done.")
+		pub.wgSend.Done()
+	}()
+
+	log.Println("Publisher.sendToQueues:", m)
+
+	queues := pub.connector.GetQueues()
+	for _, q := range queues {
+		err := q.Send(m)
+		check.Log(err)
+	}
+}
+
+// onNewConn is invoked by the Publishers Connector whenever a new connection Queue is created.
+func (pub *Publisher) onNewConn(q *core.Queue) error {
+	// TODO: forward this on to the consumer of the API.
+	return nil
+}
+
 // Publish sends data to subscribers.
 func (pub *Publisher) Publish(topic string, content []byte) error {
-	log.Println(topic, string(content))
+	fmt.Println("Publisher.Publish: enter.")
+
+	pub.wgSend.Add(1)
+
 	select {
 	case pub.ch <- Message{Topic: topic, Body: content}:
+		fmt.Println("Publisher.Publish: message sent to channel.")
 		return nil
 	default:
+		pub.wgSend.Done()
 		return errors.New("publisher queue full")
 	}
 }
 
 // Close is called to stop and invalidate the Publisher.
 func (pub *Publisher) Close() error {
+	log.Println("Publisher.Close: 1")
+	pub.wgSend.Wait()
+
 	pub.quit <- true
 	<-pub.finished
+
+	log.Println("Publisher.Close: 2")
 	return nil
 }

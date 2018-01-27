@@ -21,7 +21,6 @@ func ListenTCP(network string, laddr *net.TCPAddr) (l *Listener, err error) {
 		queueSize: DefQueueSize,
 		queues:    []*Queue{},
 		finished:  make(chan bool),
-		quit:      make(chan bool),
 	}, nil
 }
 
@@ -35,8 +34,6 @@ type Listener struct {
 	connFunc  ConnectFunc
 	m         sync.Mutex
 	finished  chan bool
-	quit      chan bool
-	wg        sync.WaitGroup
 }
 
 // Open is called to start the listener.
@@ -56,8 +53,7 @@ func (l *Listener) Open(proto StreamProtocol) error {
 			}
 
 			go func() {
-				l.wg.Add(1)
-				q := newQueue(conn, l.queueSize, l.quit, &(l.wg))
+				q := newQueue(conn, l.queueSize)
 
 				if l.connFunc != nil {
 					err = l.connFunc(q)
@@ -105,11 +101,6 @@ func (l *Listener) GetQueues() []*Queue {
 
 // Close is called to close all open connections and stop listening.
 func (l *Listener) Close() (err error) {
-	defer func() {
-		l.wg.Wait()
-	}()
-
-	close(l.quit)
 	err = l.Listener.Close()
 	<-l.finished
 	return
