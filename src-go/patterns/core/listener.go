@@ -20,6 +20,7 @@ func ListenTCP(network string, laddr *net.TCPAddr) (l *Listener, err error) {
 		EP:        NewEndpoint(laddr.String()),
 		queueSize: DefQueueSize,
 		queues:    []*Queue{},
+		finished:  make(chan bool),
 		quit:      make(chan bool),
 	}, nil
 }
@@ -33,6 +34,7 @@ type Listener struct {
 	queues    []*Queue
 	connFunc  ConnectFunc
 	m         sync.Mutex
+	finished  chan bool
 	quit      chan bool
 	wg        sync.WaitGroup
 }
@@ -42,14 +44,16 @@ func (l *Listener) Open(proto StreamProtocol) error {
 	l.proto = proto
 
 	go func() {
-		defer log.Println("listener done.")
+		defer func() {
+			log.Println("listener done.")
+			l.finished <- true
+		}()
 
 		for {
-			log.Println("waiting for subscriber connections...")
-
-			conn, err := l.Accept()
-			// TODO: check the error to see if we've been closed!
-			check.Error(err)
+			conn, err := l.Listener.Accept()
+			if check.Log(err) {
+				break
+			}
 
 			go func() {
 				l.wg.Add(1)
@@ -100,13 +104,15 @@ func (l *Listener) GetQueues() []*Queue {
 }
 
 // Close is called to close all open connections and stop listening.
-func (l *Listener) Close() error {
+func (l *Listener) Close() (err error) {
 	defer func() {
 		l.wg.Wait()
 	}()
 
 	close(l.quit)
-	return l.Listener.Close()
+	err = l.Listener.Close()
+	<-l.finished
+	return
 }
 
 // OnConnect sets a ConnectFunc to be invoked whenever a new connection Queue is created.

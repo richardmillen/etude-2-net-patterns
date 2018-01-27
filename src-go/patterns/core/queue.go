@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"sync"
 
@@ -11,11 +12,9 @@ import (
 )
 
 // DefQueueSize is intended to be used as the default size for connection Queues.
-const DefQueueSize = 10
+const DefQueueSize = 100
 
 const (
-	// PropUUIDKey is the key/name of the 'uuid' Queue property.
-	//PropUUIDKey = "uuid"
 	// PropAddressKey is the key/name of the 'addr' Queue property.
 	PropAddressKey = "addr"
 )
@@ -80,12 +79,16 @@ func (q *Queue) run() {
 
 	for {
 		select {
-		case <-q.quit:
-			return
 		case v := <-q.ch:
+			log.Println("queue, message received:", v)
 			err := q.proto.Send(q, v)
 			if check.Log(err) {
 				q.err <- err
+				return
+			}
+		default:
+			select {
+			case <-q.quit:
 				return
 			}
 		}

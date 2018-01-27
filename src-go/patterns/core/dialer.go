@@ -1,6 +1,7 @@
 package core
 
 import (
+	"log"
 	"net"
 	"sync"
 	"time"
@@ -15,6 +16,7 @@ func NewDialer(network, address string) *Dialer {
 		Network:    network,
 		RemoteAddr: address,
 		EP:         NewHostEndpoint(),
+		QueueSize:  DefQueueSize,
 		q:          make([]*Queue, 1),
 		quit:       make(chan bool),
 		Dialer: net.Dialer{
@@ -51,6 +53,7 @@ func (d *Dialer) Open(proto StreamProtocol) error {
 	d.EP.Addr = GetEndpointAddress(conn.LocalAddr())
 
 	d.wg.Add(1)
+	log.Println("Dialer.Open: queue size:", d.QueueSize)
 	d.q[0] = newQueue(conn, d.QueueSize, d.quit, &(d.wg))
 	d.q[0].SetProp(PropAddressKey, d.EP.Addr)
 
@@ -76,6 +79,8 @@ func (d *Dialer) GetQueues() []*Queue {
 
 // Close is called to close any open connections.
 func (d *Dialer) Close() error {
+	log.Println("Dialer.Close: ")
+
 	close(d.quit)
 	d.wg.Wait()
 	return nil

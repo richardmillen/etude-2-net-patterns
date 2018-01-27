@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"strings"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/frames"
@@ -153,6 +154,8 @@ type greetingV1 struct {
 }
 
 func (msg *greetingV1) read(r io.Reader) (err error) {
+	log.Println("greetingV1.read: ")
+
 	msg.Signature, err = frames.ReadSig(r)
 	if err != nil {
 		return
@@ -182,6 +185,8 @@ func (msg *greetingV1) read(r io.Reader) (err error) {
 
 // write sends the greeting to a subscription.
 func (msg *greetingV1) write(w io.Writer) (err error) {
+	log.Println("greetingV1.write: ")
+
 	buf := make([]byte, 4)
 
 	copy(buf, msg.Signature[:])
@@ -201,6 +206,8 @@ type readyV1 struct {
 
 // read receives a ready message from a subscription.
 func (msg *readyV1) read(r io.Reader) (err error) {
+	log.Println("readyV1.read: ")
+
 	msg.Major, err = frames.ReadUInt8(r)
 	if err != nil {
 		return
@@ -226,6 +233,8 @@ func (msg *readyV1) read(r io.Reader) (err error) {
 }
 
 func (msg *readyV1) write(w io.Writer) (err error) {
+	log.Println("readyV1.write: ")
+
 	props, err := frames.PropsToBytes(msg.props)
 	if err != nil {
 		return
@@ -324,6 +333,8 @@ func (msg *messageV1) readAfterNull(r io.Reader) (err error) {
 
 // write is called to send a message to a subscription endpoint (Subscriber).
 func (msg *messageV1) write(w io.Writer) (err error) {
+	log.Println("messageV1.write: ")
+
 	buf := make([]byte, 1+2+len(msg.topic)+2+len(msg.body))
 	bufView := buf
 

@@ -100,7 +100,7 @@ type Logger struct {
 
 // start is called to start logging.
 func (l *Logger) start() {
-	l.pub.Publish(InfoTopic, l.newMessage(l.event, []byte("start")))
+	l.pub.Publish(InfoTopic, l.newMessage(l.event, []byte(fmt.Sprintf("start,<hostname>,%s", l.name))))
 	l.started = true
 }
 
@@ -129,12 +129,11 @@ func (l *Logger) Print(severity Severity, a ...interface{}) {
 //
 // message format (each field is separated):
 // + message (correlation) id
-// + node name
 // + event id
 // + timestamp
-// + data (specific to type of event)
+// + data (specific to type of event; inc. node address/name)
 func (l *Logger) newMessage(event uuid.Bytes, data []byte) []byte {
-	return utils.JoinBytes(uuid.New(), fieldSep, []byte("node-name"), fieldSep, event, []byte("timestamp"), fieldSep, data)
+	return utils.JoinBytes(uuid.New(), fieldSep, event, []byte("<timestamp>"), fieldSep, data)
 }
 
 // getSeverityTopic turns a severity value into a valid topic string.

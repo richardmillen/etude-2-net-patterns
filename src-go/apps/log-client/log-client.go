@@ -15,14 +15,14 @@ import (
 
 var host = flag.String("server", "localhost", "name of log-server hsot.")
 var port = flag.Int("port", 5959, "port number to connect to.")
-var count = flag.Int("count", 1, "number of times run test function.")
+var count = flag.Int("count", 2, "number of times run test function.")
 
 var (
-	alerts    = 0
-	criticals = 0
-	errors    = 0
-	warnings  = 0
-	notices   = 0
+	alerts    = 1
+	criticals = 1
+	errors    = 1
+	warnings  = 1
+	notices   = 1
 )
 
 func init() {

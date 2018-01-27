@@ -70,14 +70,14 @@ func (sub *Subscriber) run() {
 
 				switch err.(type) {
 				case patterns.ErrOffline:
-					sub.safeErrorFunc(err)
+					sub.callErrorFunc(err)
 					return
 				case patterns.ErrConnLost:
-					sub.safeErrorFunc(err)
+					sub.callErrorFunc(err)
 					return
 				default:
 					check.Log(err)
-					continue
+					return
 				case nil:
 					if check.Log(sub.subFunc(m.(*Message))) {
 						return
@@ -88,8 +88,8 @@ func (sub *Subscriber) run() {
 	}
 }
 
-// safeErrorFunc calls the Subscribers ErrorFunc if it's configured.
-func (sub *Subscriber) safeErrorFunc(err error) {
+// callErrorFunc calls the Subscribers ErrorFunc if it's configured.
+func (sub *Subscriber) callErrorFunc(err error) {
 	if sub.errFunc == nil {
 		return
 	}

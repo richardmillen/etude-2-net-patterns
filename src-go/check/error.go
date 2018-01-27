@@ -19,7 +19,7 @@ func Error(err error) {
 // Log returns true if a valid error was logged.
 func Log(err error) bool {
 	if err != nil {
-		log.Println("error:", err)
+		log.Printf("error logged: %s\n", err)
 		return true
 	}
 	return false

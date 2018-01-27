@@ -30,7 +30,22 @@ type Publisher struct {
 }
 
 // run is the engine of the Publisher.
-// TODO: should we report subscription queue errors to the consumer?
+//
+// note that the select case/default as opposed to select case/case
+// where the latter includes the quit channel. this is to ensure the
+// pub channel is flushed before responding to the quit channel. put
+// another way, several messages could be queued in pub.ch then the
+// application could close, causing an event on pub.quit. this would
+// mean that anything in the pub.ch queue would be lost.
+// n.b. if this behaviour is desirable then it should still be possible
+// by configuring the connector to quit before the Publisher. GetQueues
+// could be made to return nil for instance.
+//
+// refer to the language spec for furter info on select case/case vs
+// select case/default:
+// https://golang.org/ref/spec#Select_statements
+//
+// TODO: should we report queue errors to the consumer?
 func (pub *Publisher) run() {
 	defer func() {
 		log.Println("publisher done.")
@@ -41,13 +56,16 @@ func (pub *Publisher) run() {
 
 	for {
 		select {
-		case <-pub.quit:
-			return
 		case m := <-pub.ch:
 			queues := pub.connector.GetQueues()
 			for _, q := range queues {
 				err := q.Send(&m)
 				check.Log(err)
+			}
+		default:
+			select {
+			case <-pub.quit:
+				return
 			}
 		}
 	}
@@ -55,6 +73,7 @@ func (pub *Publisher) run() {
 
 // Publish sends data to subscribers.
 func (pub *Publisher) Publish(topic string, content []byte) error {
+	log.Println(topic, string(content))
 	select {
 	case pub.ch <- Message{Topic: topic, Body: content}:
 		return nil
