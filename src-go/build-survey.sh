@@ -6,7 +6,7 @@ fi
 
 cd apps
 
-printf "building 'service discovery' (by survey) apps...\n\n"
+printf "building 'service discovery' (by survey) apps...\n"
 
 if [[ $1 == "" || $1 == "survey-server" ]]; then
     printf "building survey-server...\n"

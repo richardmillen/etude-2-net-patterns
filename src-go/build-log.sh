@@ -6,7 +6,7 @@ fi
 
 cd apps
 
-printf "building 'logging / distributed tracing' apps...\n\n"
+printf "building 'logging / distributed tracing' apps...\n"
 
 if [[ $1 == "" || $1 == "log-client" ]]; then
     printf "building log-client...\n"

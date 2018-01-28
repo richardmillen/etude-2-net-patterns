@@ -10,4 +10,4 @@ cd src-go
 
 cd ..
 
-printf "finished building all apps.\n"
+printf "finished building all apps.\n\n"

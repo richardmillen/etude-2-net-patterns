@@ -6,7 +6,7 @@ fi
 
 cd apps
 
-printf "building 'pub-sub' (random word publisher) apps...\n\n"
+printf "building 'pub-sub' (random word publisher) apps...\n"
 
 if [[ $1 == "" || $1 == "word-pub" ]]; then
     printf "building word-pub...\n"
