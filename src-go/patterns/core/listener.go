@@ -28,8 +28,8 @@ func ListenTCP(network string, laddr *net.TCPAddr) (l *Listener, err error) {
 type Listener struct {
 	net.Listener
 	EP        *Endpoint
-	proto     StreamProtocol
-	queueSize uint
+	gsr       GreetSendReceiver
+	queueSize int
 	queues    []*Queue
 	connFunc  ConnectFunc
 	m         sync.Mutex
@@ -37,8 +37,8 @@ type Listener struct {
 }
 
 // Open is called to start the listener.
-func (l *Listener) Open(proto StreamProtocol) error {
-	l.proto = proto
+func (l *Listener) Open(gsr GreetSendReceiver) error {
+	l.gsr = gsr
 
 	go func() {
 		defer func() {
@@ -53,7 +53,7 @@ func (l *Listener) Open(proto StreamProtocol) error {
 			}
 
 			go func() {
-				q := newQueue(conn, l.queueSize)
+				q := NewQueue(conn, l.queueSize)
 
 				if l.connFunc != nil {
 					err = l.connFunc(q)
@@ -62,7 +62,7 @@ func (l *Listener) Open(proto StreamProtocol) error {
 					}
 				}
 
-				err = l.proto.Greet(q)
+				err = l.gsr.Greet(q)
 				if check.Log(err) {
 					return
 				}
@@ -86,7 +86,7 @@ func (l *Listener) GetQueues() []*Queue {
 	qs := make([]*Queue, 0, len(l.queues))
 	for _, q := range l.queues {
 		select {
-		case e := <-q.err:
+		case e := <-q.Err:
 			log.Printf("error reported by queue '%s': %s\n", q.ID(), e)
 		default:
 			qs = append(qs, q)

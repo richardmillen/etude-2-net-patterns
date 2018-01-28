@@ -7,10 +7,8 @@ import (
 	"log"
 	"net"
 
+	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/uuid"
-
-	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns"
 )
 
 // minServiceNameLen is the minimum number of bytes of a service name.
@@ -20,19 +18,22 @@ const minServiceNameLen = 2
 // 10101011 11[000010], where [nnnnnn] identifies the protocol.
 var protocolSignature = [...]byte{0xAB, 0xC2}
 
-// checkSignature is called to check the protocol signature
-// of a greeting message.
-func checkSignature(sig [2]byte) error {
-	if sig != protocolSignature {
-		return patterns.ErrInvalidSig
-	}
-	return nil
-}
+// ErrBadSurveyData ...
+var ErrBadSurveyData = errors.New("invalid survey data")
 
 const (
 	cmdSurvey     uint8 = 0
 	cmdResponseOK uint8 = 1
 )
+
+// checkSignature is called to check the protocol signature
+// of a greeting message.
+func checkSignature(sig [2]byte) error {
+	if sig != protocolSignature {
+		return core.ErrInvalidSig
+	}
+	return nil
+}
 
 // survey is both a message sent by a Surveyor when searching for a service
 // and also a response message sent by a Candidate.
@@ -56,9 +57,12 @@ func (s *survey) maxDataLen() int {
 
 // toBytes turns a survey message into a slice of bytes.
 // HACK: passing the min/max in as parameters is ugly!
-func (s *survey) toBytes(minDataLen int, maxDataLen int) []byte {
-	data := string(s.data[:])
-	check.IsInRange(len(data), minDataLen, maxDataLen, "data length")
+func (s *survey) toBytes(minDataLen int, maxDataLen int) ([]byte, error) {
+	if len(s.data) < minDataLen || len(s.data) > maxDataLen {
+		return nil, ErrBadSurveyData
+	}
+
+	data := string(s.data)
 
 	buf := make([]byte, 2+1+uuid.Size+len(data))
 	bufView := buf
@@ -74,7 +78,7 @@ func (s *survey) toBytes(minDataLen int, maxDataLen int) []byte {
 
 	copy(bufView, []byte(data))
 
-	return buf
+	return buf, nil
 }
 
 // fromBytes fills the fields of a survey message from a slice of bytes.
@@ -107,13 +111,24 @@ func (s *survey) readFrom(conn net.PacketConn) (addr net.Addr, err error) {
 	if err != nil {
 		return
 	}
-	check.IsGreaterEqual(n, s.minDataLen(), "survey message length")
+
+	if n < s.minDataLen() {
+		err = ErrBadSurveyData
+		return
+	}
+
 	s.fromBytes(buf[0:n])
 	return
 }
 
 func (s *survey) write(w io.Writer) (err error) {
-	buf := s.toBytes(s.minDataLen(), s.maxDataLen())
+	var buf []byte
+
+	buf, err = s.toBytes(s.minDataLen(), s.maxDataLen())
+	if err != nil {
+		return
+	}
+
 	_, err = w.Write(buf)
 	return
 }
@@ -158,7 +173,12 @@ func (res *response) read(r io.Reader, surveyID uuid.Bytes) (err error) {
 	if err != nil {
 		return
 	}
-	check.IsGreaterEqual(n, res.minDataLen(), "survey message length")
+
+	if n < res.minDataLen() {
+		err = ErrBadSurveyData
+		return
+	}
+
 	res.fromBytes(buf[0:n])
 
 	if res.command != cmdResponseOK {
@@ -176,8 +196,7 @@ func (res *response) read(r io.Reader, surveyID uuid.Bytes) (err error) {
 
 func (res *response) writeTo(conn net.PacketConn, addr net.Addr) (err error) {
 	log.Println("sending survey response...")
-
-	buf := res.toBytes(res.minDataLen(), res.maxDataLen())
+	buf, err := res.toBytes(res.minDataLen(), res.maxDataLen())
 	_, err = conn.WriteTo(buf, addr)
 	return
 }

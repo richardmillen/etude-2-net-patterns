@@ -1,4 +1,4 @@
-package patterns
+package core
 
 import (
 	"errors"

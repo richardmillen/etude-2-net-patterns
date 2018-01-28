@@ -36,13 +36,13 @@ func main() {
 	sub := pubsub.NewSubscriber(listener, *severity)
 	defer sub.Close()
 
-	sub.Error(func(err error) {
+	sub.Error(func(err error) error {
 		log.Println("error:", err)
+		return nil
 	})
 
 	sub.Subscribe(func(m *pubsub.Message) (err error) {
 		log.Printf("%s: %s\n", m.Topic, string(m.Body))
-
 		return
 	})
 

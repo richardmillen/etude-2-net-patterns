@@ -51,7 +51,7 @@ func (p *pubProtoV1) Greet(q *core.Queue) error {
 		return err
 	}
 
-	q.SetProtocol(p)
+	q.SetGSR(p)
 	q.SetProp(propEndpointIDKey, uuid.NewFrom(ready.props[propEndpointIDKey]))
 	q.SetProp(propTopicKey, string(ready.props[propTopicKey]))
 

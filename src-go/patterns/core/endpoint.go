@@ -22,6 +22,9 @@ func NewHostEndpoint() *Endpoint {
 }
 
 // Endpoint represents a service endpoint.
+//
+// TODO: i'm not convinced this is needed, esp. given that each
+// Queue has it's own uuid.
 type Endpoint struct {
 	UUID uuid.Bytes
 	Addr string

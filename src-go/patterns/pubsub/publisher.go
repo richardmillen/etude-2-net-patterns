@@ -1,8 +1,6 @@
 package pubsub
 
 import (
-	"errors"
-	"fmt"
 	"log"
 	"sync"
 
@@ -11,8 +9,6 @@ import (
 )
 
 // NewPublisher returns a new Publisher that will publish messages to Subscriber's.
-//
-// TODO: figure out good way to set queue size without cluttering the API.
 func NewPublisher(c core.Connector) *Publisher {
 	pub := &Publisher{connector: c}
 
@@ -62,27 +58,11 @@ func (pub *Publisher) run() {
 	for {
 		select {
 		case m := <-pub.ch:
-			pub.sendToQueues(&m)
+			core.SendToQueues(pub.connector, &m)
 		case <-pub.quit:
-			core.CloseConnectedQueues(pub.connector)
+			core.CloseQueues(pub.connector)
 			return
 		}
-	}
-}
-
-// sendToQueues is called to send a message to all active Queues.
-func (pub *Publisher) sendToQueues(m *Message) {
-	defer func() {
-		log.Println("Publisher.sendToQueues: done.")
-		pub.wgSend.Done()
-	}()
-
-	log.Println("Publisher.sendToQueues:", m)
-
-	queues := pub.connector.GetQueues()
-	for _, q := range queues {
-		err := q.Send(m)
-		check.Log(err)
 	}
 }
 
@@ -94,9 +74,11 @@ func (pub *Publisher) onNewConn(q *core.Queue) error {
 
 // Publish sends data to subscribers.
 func (pub *Publisher) Publish(topic string, content []byte) error {
-	fmt.Println("Publisher.Publish: enter.")
+	core.SendToQueues(pub.connector, &Message{Topic: topic, Body: content})
+	return nil
 
-	pub.wgSend.Add(1)
+	// TODO: reinstate the channel-based logic.
+	/*pub.wgSend.Add(1)
 
 	select {
 	case pub.ch <- Message{Topic: topic, Body: content}:
@@ -105,7 +87,7 @@ func (pub *Publisher) Publish(topic string, content []byte) error {
 	default:
 		pub.wgSend.Done()
 		return errors.New("publisher queue full")
-	}
+	}*/
 }
 
 // Close is called to stop and invalidate the Publisher.

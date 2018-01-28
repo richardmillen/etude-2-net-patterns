@@ -4,23 +4,16 @@ import (
 	"log"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
-
-// ConnectFunc is called by a Subscriber to connect to a Publisher.
-//type ConnectFunc func() (io.ReadWriteCloser, error)
 
 // SubscribeFunc is called by a Subscriber when a message is received from a Publisher.
 type SubscribeFunc func(*Message) error
 
-// ErrorFunc is called by a Subscriber when an error occurs during processing.
-type ErrorFunc func(error)
-
 // NewSubscriber returns a new Subscriber that will subscribe to topics published by an io.ReadWriter.
 // The Connector may be a valid core.Dialer, or core.Listener.
 func NewSubscriber(c core.Connector, topics ...string) *Subscriber {
-	check.IsGreater(len(topics), 0, "number of topics")
+	check.MustGreater(len(topics), 0, "number of topics")
 
 	sub := &Subscriber{
 		topics:    topics,
@@ -42,7 +35,7 @@ type Subscriber struct {
 	connector core.Connector
 	proto     SubProtocol
 	subFunc   SubscribeFunc
-	errFunc   ErrorFunc
+	errFunc   core.ErrorFunc
 	quit      chan bool
 	finished  chan bool
 }
@@ -61,50 +54,16 @@ func (sub *Subscriber) run() {
 	for {
 		select {
 		case <-sub.quit:
-			core.CloseConnectedQueues(sub.connector)
+			core.CloseQueues(sub.connector)
 			return
 		default:
-			err := sub.recv()
+			err := core.RecvQueues(sub.connector, sub.onRecv, sub.onRecvError)
 			if err != nil {
+				core.CloseQueues(sub.connector)
 				return
 			}
 		}
 	}
-}
-
-func (sub *Subscriber) recv() (err error) {
-	queues := sub.connector.GetQueues()
-	for _, q := range queues {
-		var m interface{}
-
-		m, err = sub.proto.Recv(q)
-		err = patterns.Error(err)
-
-		switch err.(type) {
-		case patterns.ErrOffline:
-			sub.callErrorFunc(err)
-			return
-		case patterns.ErrConnLost:
-			sub.callErrorFunc(err)
-			return
-		default:
-			check.Log(err)
-			return
-		case nil:
-			if check.Log(sub.subFunc(m.(*Message))) {
-				return
-			}
-		}
-	}
-	return
-}
-
-// callErrorFunc calls the Subscribers ErrorFunc if it's configured.
-func (sub *Subscriber) callErrorFunc(err error) {
-	if sub.errFunc == nil {
-		return
-	}
-	sub.errFunc(err)
 }
 
 // onNewConn is invoked by the Subscribers Connector whenever a new connection Queue is created.
@@ -115,9 +74,25 @@ func (sub *Subscriber) onNewConn(q *core.Queue) error {
 	return nil
 }
 
+// onRecv forwards a received message to the Subscribers SubscribeFunc if it's configured.
+func (sub *Subscriber) onRecv(v interface{}) error {
+	if sub.subFunc == nil {
+		return nil
+	}
+	return sub.subFunc(v.(*Message))
+}
+
+// onRecvError forwards a Queue receive error to the Subscribers ErrorFunc if it's configured.
+func (sub *Subscriber) onRecvError(err error) error {
+	if sub.errFunc == nil {
+		return nil
+	}
+	return sub.errFunc(err)
+}
+
 // Error is called to configure the ErrorFunc of a Subscriber,
 // which is executed if a runtime error occurs while subscribing.
-func (sub *Subscriber) Error(errFunc ErrorFunc) {
+func (sub *Subscriber) Error(errFunc core.ErrorFunc) {
 	sub.errFunc = errFunc
 }
 
@@ -127,7 +102,7 @@ func (sub *Subscriber) Error(errFunc ErrorFunc) {
 // TODO: cater for multiple calls and from multiple goroutines.
 // TODO: how to cater for Close() then Subscribe() ?
 func (sub *Subscriber) Subscribe(subFunc SubscribeFunc) {
-	check.IsNotNil(subFunc, "subscription function")
+	check.MustNotNil(subFunc, "subscription function")
 
 	sub.subFunc = subFunc
 	go sub.run()

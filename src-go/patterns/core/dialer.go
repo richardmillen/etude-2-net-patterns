@@ -29,38 +29,39 @@ type Dialer struct {
 	Network    string
 	RemoteAddr string
 	EP         *Endpoint
-	QueueSize  uint
+	QueueSize  int
 	q          []*Queue
+	conn       net.Conn
 	connFunc   ConnectFunc
-	proto      StreamProtocol
+	gsr        GreetSendReceiver
 }
 
 // Open is called to initialise the Dialer with a protocol and connect.
 //
 // An id is often used so the remote Endpoint is able to uniquely identify this
 // Connector (local Endpoint).
-func (d *Dialer) Open(proto StreamProtocol) error {
-	d.proto = proto
+func (d *Dialer) Open(gsr GreetSendReceiver) (err error) {
+	d.gsr = gsr
 
-	conn, err := d.Dial(d.Network, d.RemoteAddr)
+	d.conn, err = d.Dial(d.Network, d.RemoteAddr)
 	if err != nil {
-		return err
+		return
 	}
-	d.EP.Addr = GetEndpointAddress(conn.LocalAddr())
+	d.EP.Addr = GetEndpointAddress(d.conn.LocalAddr())
 
 	log.Println("Dialer.Open: queue size:", d.QueueSize)
-	d.q[0] = newQueue(conn, d.QueueSize)
+	d.q[0] = NewQueue(d.conn, d.QueueSize)
 	d.q[0].SetProp(PropAddressKey, d.EP.Addr)
 
 	if d.connFunc != nil {
 		err = d.connFunc(d.q[0])
 		if err != nil {
-			return err
+			return
 		}
 	}
 
-	err = d.proto.Greet(d.q[0])
-	return err
+	err = d.gsr.Greet(d.q[0])
+	return
 }
 
 // GetQueues returns a slice of active endpoint Queues.

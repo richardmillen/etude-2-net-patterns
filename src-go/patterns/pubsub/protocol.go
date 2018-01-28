@@ -1,7 +1,6 @@
 package pubsub
 
 import (
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
 
@@ -20,12 +19,12 @@ const (
 
 // PubProtocol is the Publisher-side of the pub-sub wire protocol.
 type PubProtocol interface {
-	core.StreamProtocol
+	core.GreetSendReceiver
 }
 
 // SubProtocol is the Subscriber-side of the pub-sub wire protocol.
 type SubProtocol interface {
-	core.StreamProtocol
+	core.GreetSendReceiver
 }
 
 // A Greeting is the first message sent by a Publisher to a Subscriber.
@@ -45,7 +44,7 @@ type Ready struct {
 // of a greeting message.
 func checkSignature(sig [2]byte) error {
 	if sig != ProtocolSignature {
-		return patterns.ErrInvalidSig
+		return core.ErrInvalidSig
 	}
 	return nil
 }
