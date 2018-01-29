@@ -42,8 +42,7 @@ type SendReceiver interface {
 // GreetSendReceiver is the interface that groups the Greet, Send and Recv methods.
 type GreetSendReceiver interface {
 	QueueGreeter
-	QueueSender
-	QueueReceiver
+	SendReceiver
 }
 
 // NewQueue constructs a new connection queue.
@@ -54,7 +53,7 @@ func NewQueue(rw io.ReadWriter, capacity int) *Queue {
 		id: uuid.New(),
 		rw: rw,
 	}
-	q.Err = make(chan error, capacity)
+	q.err = make(chan error, capacity)
 	q.props = make(map[string]interface{})
 	q.ch = make(chan interface{}, capacity)
 	q.quit = make(chan bool, 1)
@@ -66,12 +65,13 @@ func NewQueue(rw io.ReadWriter, capacity int) *Queue {
 // Queue handles a subscriber connection on the Publisher.
 //
 // TODO: finished vs. wgFinished?
-// TODO: exporting Err whereas function callbacks have been used everywhere else with similar intent.
+// TODO: Send() & Recv() both need to return errors, but so too does the actual
+// send operation(?) which happens in a goroutine. this is ugly.
 type Queue struct {
-	Err        chan error
+	err        chan error
 	id         uuid.Bytes
 	rw         io.ReadWriter
-	gsr        GreetSendReceiver
+	sr         SendReceiver
 	props      map[string]interface{}
 	ch         chan interface{}
 	quit       chan bool
@@ -85,6 +85,7 @@ type Queue struct {
 // run is the engine of a connection Queue.
 func (q *Queue) run() {
 	defer func() {
+		log.Println("Queue done.")
 		//q.wgFinished.Done()
 		q.finished <- true
 	}()
@@ -93,11 +94,9 @@ func (q *Queue) run() {
 		select {
 		case v := <-q.ch:
 			err := q.trySend(v)
-			if err != nil {
-				q.Err <- err
-			}
+			q.setError(err)
 		case <-q.quit:
-			log.Println("Queue.run: quit received.")
+			//log.Println("Queue.run: quit received.")
 			return
 		}
 	}
@@ -109,63 +108,52 @@ func (q *Queue) trySend(v interface{}) (err error) {
 		q.wgSend.Done()
 	}()
 
-	err = check.NotNil(q.gsr, "queue greet-send-receiver")
+	err = check.NotNil(q.sr, "queue send-receiver")
 	if err != nil {
 		return
 	}
 
-	log.Println("queue, message received:", v)
-	err = q.gsr.Send(q, v)
+	//log.Println("queue, message received:", v)
+	err = q.sr.Send(q, v)
 	return
 }
 
-// ID is the unique identifier of the queue
-//
-// TODO: is this even needed?
-func (q *Queue) ID() uuid.Bytes {
-	return q.id
-}
+func (q *Queue) setError(err error) {
+	if err == nil {
+		return
+	}
 
-// Conn returns a ReadWriter that represents the connection to the remote endpoint.
-func (q *Queue) Conn() io.ReadWriter {
-	return q.rw
-}
-
-// Cap returns the capacity of the Queue.
-func (q *Queue) Cap() int {
-	return cap(q.ch)
-}
-
-// SetGSR is called to provide a Queue with a GreetSendReceiver.
-func (q *Queue) SetGSR(gsr GreetSendReceiver) {
-	q.gsr = gsr
-}
-
-// Prop returns the value of a property on the queue.
-func (q *Queue) Prop(key string) interface{} {
-	return q.props[key]
-}
-
-// SetProp is called to set a property on the queue.
-func (q *Queue) SetProp(key string, value interface{}) {
-	q.props[key] = value
+	select {
+	case q.err <- err:
+	default:
+	}
 }
 
 // Send is called to pass data to a connection Queue.
-// 
-// TODO: should this method pass errors to q.Err rather than returning one?
-func (q *Queue) Send(v interface{}) error {
-	log.Println("Queue.Send: enter.")
+func (q *Queue) Send(v interface{}) (err error) {
+	//log.Println("Queue.Send: enter.")
 	q.wgSend.Add(1)
 
 	select {
 	case q.ch <- v:
-		log.Println("Queue.Send: message queued.")
-		return nil
+		//log.Println("Queue.Send: message queued.")
 	default:
+		err = fmt.Errorf("connection queue '%s' is full", q.id)
 		q.wgSend.Done()
-		return fmt.Errorf("connection queue '%s' is full", q.id)
 	}
+	return
+}
+
+// Recv is called to receive incoming data.
+func (q *Queue) Recv() (interface{}, error) {
+	//log.Println("Queue.Recv: enter.")
+
+	err := check.NotNil(q.sr, "queue send-receiver")
+	if err != nil {
+		return nil, err
+	}
+
+	return q.sr.Recv(q)
 }
 
 // Wait will block until any outstanding send operations complete.
@@ -179,4 +167,51 @@ func (q *Queue) Close() error {
 	q.quit <- true
 	<-q.finished
 	return nil
+}
+
+// ID is the unique identifier of the queue
+//
+// TODO: is this even needed?
+func (q *Queue) ID() uuid.Bytes {
+	return q.id
+}
+
+// Conn returns a ReadWriter that represents the connection to the remote endpoint.
+//
+// TODO: review where this is used and why those areas aren't invoking Send/Recv
+// on the Queue directly.
+func (q *Queue) Conn() io.ReadWriter {
+	return q.rw
+}
+
+// Cap returns the capacity of the Queue.
+func (q *Queue) Cap() int {
+	return cap(q.ch)
+}
+
+// Err returns an error from the Queue if one (or more) has occurred.
+//
+// TODO: exporting Err() whereas function callbacks have been used everywhere else with similar intent.
+func (q *Queue) Err() (err error) {
+	select {
+	case err = <-q.err:
+		return err
+	default:
+	}
+	return
+}
+
+// SetSendReceiver is called to provide a Queue with a GreetSendReceiver.
+func (q *Queue) SetSendReceiver(sr SendReceiver) {
+	q.sr = sr
+}
+
+// Prop returns the value of a property on the queue.
+func (q *Queue) Prop(key string) interface{} {
+	return q.props[key]
+}
+
+// SetProp is called to set a property on the queue.
+func (q *Queue) SetProp(key string, value interface{}) {
+	q.props[key] = value
 }

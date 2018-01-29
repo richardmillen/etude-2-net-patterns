@@ -45,7 +45,7 @@ func RecvQueues(c Connector, recvFunc RecvFunc, errFunc ErrorFunc) (err error) {
 	for _, q := range queues {
 		var m interface{}
 
-		m, err = q.gsr.Recv(q)
+		m, err = q.Recv()
 
 		err = Error(err)
 		if err != nil {

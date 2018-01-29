@@ -4,6 +4,8 @@ import (
 	"log"
 	"net"
 	"time"
+
+	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
 
 // DefDialerTimeout is the default timeout value used by a Dialer.
@@ -61,6 +63,15 @@ func (d *Dialer) Open(gsr GreetSendReceiver) (err error) {
 	}
 
 	err = d.gsr.Greet(d.q[0])
+	if err != nil {
+		return
+	}
+
+	err = check.NotNil(d.q[0].sr, "queue send-receiver")
+	if err != nil {
+		return
+	}
+
 	return
 }
 

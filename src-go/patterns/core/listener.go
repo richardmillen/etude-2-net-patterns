@@ -62,8 +62,11 @@ func (l *Listener) Open(gsr GreetSendReceiver) error {
 					}
 				}
 
-				err = l.gsr.Greet(q)
-				if check.Log(err) {
+				if check.Log(l.gsr.Greet(q)) {
+					return
+				}
+
+				if check.Log(check.NotNil(q.sr, "queue send-receiver")) {
 					return
 				}
 
@@ -85,12 +88,12 @@ func (l *Listener) GetQueues() []*Queue {
 
 	qs := make([]*Queue, 0, len(l.queues))
 	for _, q := range l.queues {
-		select {
-		case e := <-q.Err:
-			log.Printf("error reported by queue '%s': %s\n", q.ID(), e)
-		default:
-			qs = append(qs, q)
+		err := q.Err()
+		if err != nil {
+			log.Printf("error reported by queue '%s': %s\n", q.ID(), err)
+			continue
 		}
+		qs = append(qs, q)
 	}
 	l.queues = qs
 
