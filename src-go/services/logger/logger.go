@@ -35,17 +35,17 @@ const (
 	// AlertTopic ...
 	AlertTopic = "1"
 	// CritTopic ...
-	CritTopic = "21"
+	CritTopic = "12"
 	// ErrorTopic ...
-	ErrorTopic = "321"
+	ErrorTopic = "123"
 	// WarnTopic ...
-	WarnTopic = "4321"
+	WarnTopic = "1234"
 	// NoticeTopic ...
-	NoticeTopic = "54321"
+	NoticeTopic = "12345"
 	// InfoTopic ...
-	InfoTopic = "654321"
+	InfoTopic = "123456"
 	// DebugTopic ...
-	DebugTopic = "7654321"
+	DebugTopic = "1234567"
 )
 
 var fieldSep = []byte{','}
@@ -127,13 +127,15 @@ func (l *Logger) Print(severity Severity, a ...interface{}) {
 
 // newMessage is called to generate a new log message.
 //
+// TODO: currently converting uuid bytes to string which is only intended for debugging.
+//
 // message format (each field is separated):
 // + message (correlation) id
 // + event id
 // + timestamp
 // + data (specific to type of event; inc. node address/name)
 func (l *Logger) newMessage(event uuid.Bytes, data []byte) []byte {
-	return utils.JoinBytes(uuid.New(), fieldSep, event, []byte("<timestamp>"), fieldSep, data)
+	return utils.JoinBytes([]byte(uuid.New().String()), fieldSep, []byte(event.String()), fieldSep, []byte("<timestamp>"), fieldSep, data)
 }
 
 // getSeverityTopic turns a severity value into a valid topic string.
@@ -141,9 +143,8 @@ func (l *Logger) getSeverityTopic(severity Severity) string {
 	v := int(severity)
 	var buf bytes.Buffer
 
-	for v > 0 {
-		buf.WriteString(strconv.Itoa(v))
-		v--
+	for n := 1; n <= v; n++ {
+		buf.WriteString(strconv.Itoa(n))
 	}
 
 	return buf.String()

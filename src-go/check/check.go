@@ -3,6 +3,7 @@ package check
 import (
 	"fmt"
 	"log"
+	"runtime/debug"
 )
 
 // Must logs an error and panics.
@@ -23,6 +24,7 @@ func Error(err error) {
 func Log(err error) bool {
 	if err != nil {
 		log.Printf("error logged: %s\n", err)
+		debug.PrintStack()
 		return true
 	}
 	return false

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"strings"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/frames"
@@ -30,13 +29,23 @@ func checkVersion(major uint8, minor uint8) error {
 // pubProtoV1 is version 1.0 of the Pub protocol.
 type pubProtoV1 struct{}
 
+// Major returns the major version number of the protocol.
+func (p *pubProtoV1) Major() uint8 {
+	return majorV1
+}
+
+// Minor returns the minor version number of the protocol.
+func (p *pubProtoV1) Minor() uint8 {
+	return minorV1
+}
+
 // Greet is called by a Publisher to set up a new connection with a Subscriber.
 func (p *pubProtoV1) Greet(q *core.Queue) error {
 	greeting := greetingV1{
 		Greeting{
 			Signature: ProtocolSignature,
-			Major:     majorV1,
-			Minor:     minorV1,
+			Major:     p.Major(),
+			Minor:     p.Minor(),
 		},
 	}
 
@@ -88,6 +97,16 @@ func (p *pubProtoV1) isQueueSubscribing(q *core.Queue, topic string) bool {
 // subProtoV1 is version 1.0 of the Sub protocol.
 type subProtoV1 struct{}
 
+// Major returns the major version number of the protocol.
+func (s *subProtoV1) Major() uint8 {
+	return majorV1
+}
+
+// Minor returns the minor version number of the protocol.
+func (s *subProtoV1) Minor() uint8 {
+	return minorV1
+}
+
 // Greet is called by a Subscriber to respond to a Publisher's Greeting,
 // informing the Publisher that it's ready to receive topic messages/data.
 //
@@ -99,10 +118,12 @@ func (s *subProtoV1) Greet(q *core.Queue) error {
 		return err
 	}
 
+	q.SetSendReceiver(s)
+
 	ready := readyV1{
 		Ready: Ready{
-			Major: majorV1,
-			Minor: minorV1,
+			Major: s.Major(),
+			Minor: s.Minor(),
 		},
 		props: make(map[string][]byte),
 	}
@@ -154,8 +175,6 @@ type greetingV1 struct {
 }
 
 func (msg *greetingV1) read(r io.Reader) (err error) {
-	log.Println("greetingV1.read: ")
-
 	msg.Signature, err = frames.ReadSig(r)
 	if err != nil {
 		return
@@ -185,8 +204,6 @@ func (msg *greetingV1) read(r io.Reader) (err error) {
 
 // write sends the greeting to a subscription.
 func (msg *greetingV1) write(w io.Writer) (err error) {
-	log.Println("greetingV1.write: ")
-
 	buf := make([]byte, 4)
 
 	copy(buf, msg.Signature[:])
@@ -206,8 +223,6 @@ type readyV1 struct {
 
 // read receives a ready message from a subscription.
 func (msg *readyV1) read(r io.Reader) (err error) {
-	log.Println("readyV1.read: ")
-
 	msg.Major, err = frames.ReadUInt8(r)
 	if err != nil {
 		return
@@ -229,12 +244,11 @@ func (msg *readyV1) read(r io.Reader) (err error) {
 	}
 
 	msg.props, err = frames.ReadProps(r, int64(msg.propsLen))
+
 	return
 }
 
 func (msg *readyV1) write(w io.Writer) (err error) {
-	log.Println("readyV1.write: ")
-
 	props, err := frames.PropsToBytes(msg.props)
 	if err != nil {
 		return
@@ -333,8 +347,6 @@ func (msg *messageV1) readAfterNull(r io.Reader) (err error) {
 
 // write is called to send a message to a subscription endpoint (Subscriber).
 func (msg *messageV1) write(w io.Writer) (err error) {
-	log.Println("messageV1.write: ")
-
 	buf := make([]byte, 1+2+len(msg.topic)+2+len(msg.body))
 	bufView := buf
 

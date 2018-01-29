@@ -1,12 +1,11 @@
 package core
 
 import (
-	"log"
-
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
 
-// ErrorFunc is called by RecvAllQueues when an error occurs during processing.
+// ErrorFunc is callback used to report errors to a consumer.
+// The return error is intended to be used to abort processing.
 type ErrorFunc func(error) error
 
 // RecvFunc is called by RecvAllQueues when data is received on a Queue.
@@ -28,15 +27,11 @@ type Connector interface {
 // SendToQueues is called to send a message to all active Queues.
 // n.b. Any send errors are held against each Queue.
 func SendToQueues(c Connector, v interface{}) {
-	log.Println("core.SendToQueues:", v)
-
 	queues := c.GetQueues()
 	for _, q := range queues {
 		err := q.Send(v)
 		check.Log(err)
 	}
-
-	log.Println("core.SendToQueues: done.")
 }
 
 // RecvQueues is called to receive on all Queues.
@@ -46,8 +41,6 @@ func RecvQueues(c Connector, recvFunc RecvFunc, errFunc ErrorFunc) (err error) {
 		var m interface{}
 
 		m, err = q.Recv()
-
-		err = Error(err)
 		if err != nil {
 			err = errFunc(err)
 			if err != nil {
@@ -66,12 +59,8 @@ func RecvQueues(c Connector, recvFunc RecvFunc, errFunc ErrorFunc) (err error) {
 
 // CloseQueues is called to close all connection Queues.
 func CloseQueues(c Connector) {
-	log.Println("core.CloseQueues: 1")
-
 	queues := c.GetQueues()
 	for _, q := range queues {
 		q.Close()
 	}
-
-	log.Println("core.CloseQueues: 2")
 }

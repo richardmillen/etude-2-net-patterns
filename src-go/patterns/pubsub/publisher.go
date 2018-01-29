@@ -4,7 +4,6 @@ import (
 	"log"
 	"sync"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
 )
 
@@ -15,9 +14,11 @@ func NewPublisher(c core.Connector) *Publisher {
 	pub.connector.OnConnect(pub.onNewConn)
 	pub.ch = make(chan Message, core.DefQueueSize)
 	pub.quit = make(chan bool, 1)
+	pub.err = make(chan error)
 	pub.finished = make(chan bool)
 
 	go pub.run()
+
 	return pub
 }
 
@@ -26,6 +27,7 @@ type Publisher struct {
 	connector core.Connector
 	ch        chan Message
 	quit      chan bool
+	err       chan error
 	finished  chan bool
 	wgSend    sync.WaitGroup
 }
@@ -49,11 +51,15 @@ type Publisher struct {
 // TODO: should we report queue errors to the consumer?
 func (pub *Publisher) run() {
 	defer func() {
-		log.Println("publisher done.")
+		log.Println("publisher finished.")
 		pub.finished <- true
 	}()
 
-	check.Must(pub.connector.Open(&pubProtoV1{}))
+	err := pub.connector.Open(&pubProtoV1{})
+	pub.err <- err
+	if err != nil {
+		return
+	}
 
 	for {
 		select {
@@ -74,6 +80,12 @@ func (pub *Publisher) onNewConn(q *core.Queue) error {
 
 // Publish sends data to subscribers.
 func (pub *Publisher) Publish(topic string, content []byte) error {
+	select {
+	case err := <-pub.err:
+		return err
+	default:
+	}
+
 	core.SendToQueues(pub.connector, &Message{Topic: topic, Body: content})
 	return nil
 
@@ -92,12 +104,9 @@ func (pub *Publisher) Publish(topic string, content []byte) error {
 
 // Close is called to stop and invalidate the Publisher.
 func (pub *Publisher) Close() error {
-	log.Println("Publisher.Close: 1")
 	pub.wgSend.Wait()
 
 	pub.quit <- true
 	<-pub.finished
-
-	log.Println("Publisher.Close: 2")
 	return nil
 }

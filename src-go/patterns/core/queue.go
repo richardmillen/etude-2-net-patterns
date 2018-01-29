@@ -93,8 +93,7 @@ func (q *Queue) run() {
 	for {
 		select {
 		case v := <-q.ch:
-			err := q.trySend(v)
-			q.setError(err)
+			q.trySend(v)
 		case <-q.quit:
 			//log.Println("Queue.run: quit received.")
 			return
@@ -103,40 +102,37 @@ func (q *Queue) run() {
 }
 
 // trySend attempts to send data using the Queues GreetSendReceiver.
-func (q *Queue) trySend(v interface{}) (err error) {
+func (q *Queue) trySend(v interface{}) {
 	defer func() {
 		q.wgSend.Done()
 	}()
 
-	err = check.NotNil(q.sr, "queue send-receiver")
-	if err != nil {
+	if q.setError(check.NotNil(q.sr, "queue send-receiver")) {
 		return
 	}
 
-	//log.Println("queue, message received:", v)
-	err = q.sr.Send(q, v)
-	return
+	q.setError(q.sr.Send(q, v))
 }
 
-func (q *Queue) setError(err error) {
+func (q *Queue) setError(err error) bool {
 	if err == nil {
-		return
+		return false
 	}
 
 	select {
 	case q.err <- err:
+		return true
 	default:
+		return false
 	}
 }
 
 // Send is called to pass data to a connection Queue.
 func (q *Queue) Send(v interface{}) (err error) {
-	//log.Println("Queue.Send: enter.")
 	q.wgSend.Add(1)
 
 	select {
 	case q.ch <- v:
-		//log.Println("Queue.Send: message queued.")
 	default:
 		err = fmt.Errorf("connection queue '%s' is full", q.id)
 		q.wgSend.Done()
@@ -145,15 +141,19 @@ func (q *Queue) Send(v interface{}) (err error) {
 }
 
 // Recv is called to receive incoming data.
-func (q *Queue) Recv() (interface{}, error) {
+func (q *Queue) Recv() (v interface{}, err error) {
 	//log.Println("Queue.Recv: enter.")
 
-	err := check.NotNil(q.sr, "queue send-receiver")
-	if err != nil {
-		return nil, err
+	err = check.NotNil(q.sr, "queue send-receiver")
+	if q.setError(err) {
+		return
 	}
 
-	return q.sr.Recv(q)
+	v, err = q.sr.Recv(q)
+	err = GetError(err)
+	q.setError(err)
+
+	return
 }
 
 // Wait will block until any outstanding send operations complete.

@@ -37,7 +37,7 @@ func main() {
 	defer sub.Close()
 
 	sub.Error(func(err error) error {
-		log.Println("error:", err)
+		log.Println("collector error:", err)
 		return nil
 	})
 

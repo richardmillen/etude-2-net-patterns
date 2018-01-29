@@ -1,8 +1,8 @@
 package core
 
 import (
-	"log"
 	"net"
+	"sync"
 	"time"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
@@ -13,7 +13,7 @@ const DefDialerTimeout = time.Second
 
 // NewDialer constructs a new connection Dialer.
 func NewDialer(network, address string) *Dialer {
-	return &Dialer{
+	d := &Dialer{
 		Network:    network,
 		RemoteAddr: address,
 		EP:         NewHostEndpoint(),
@@ -23,6 +23,8 @@ func NewDialer(network, address string) *Dialer {
 			Timeout: DefDialerTimeout,
 		},
 	}
+	d.wgOpen.Add(1)
+	return d
 }
 
 // A Dialer enables an endpoint to connect to another endpoint.
@@ -36,6 +38,7 @@ type Dialer struct {
 	conn       net.Conn
 	connFunc   ConnectFunc
 	gsr        GreetSendReceiver
+	wgOpen     sync.WaitGroup
 }
 
 // Open is called to initialise the Dialer with a protocol and connect.
@@ -43,6 +46,8 @@ type Dialer struct {
 // An id is often used so the remote Endpoint is able to uniquely identify this
 // Connector (local Endpoint).
 func (d *Dialer) Open(gsr GreetSendReceiver) (err error) {
+	defer d.wgOpen.Done()
+
 	d.gsr = gsr
 
 	d.conn, err = d.Dial(d.Network, d.RemoteAddr)
@@ -51,7 +56,6 @@ func (d *Dialer) Open(gsr GreetSendReceiver) (err error) {
 	}
 	d.EP.Addr = GetEndpointAddress(d.conn.LocalAddr())
 
-	log.Println("Dialer.Open: queue size:", d.QueueSize)
 	d.q[0] = NewQueue(d.conn, d.QueueSize)
 	d.q[0].SetProp(PropAddressKey, d.EP.Addr)
 
@@ -81,6 +85,7 @@ func (d *Dialer) Open(gsr GreetSendReceiver) (err error) {
 // (stored in a slice to avoid recreating slices unnecessarily),
 // but it could be extended to support 'n' queues.
 func (d *Dialer) GetQueues() []*Queue {
+	d.wgOpen.Wait()
 	return d.q
 }
 

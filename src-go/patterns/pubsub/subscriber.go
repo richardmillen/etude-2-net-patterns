@@ -45,7 +45,7 @@ type Subscriber struct {
 // TODO: handle connection errors by retrying.
 func (sub *Subscriber) run() {
 	defer func() {
-		log.Println("subscriber done.")
+		log.Println("subscriber finished.")
 		sub.finished <- true
 	}()
 

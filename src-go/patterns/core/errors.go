@@ -7,22 +7,20 @@ import (
 	"net"
 )
 
-// Error is called to return an appropriate error given some other error.
-func Error(err error) error {
+// GetError is called to return an appropriate error given some other error.
+func GetError(err error) error {
 	if err == nil {
 		return nil
 	}
 
 	if err == io.EOF {
-		return ErrConnLost{
-			error: err,
-		}
+		return ErrConnClosed{}
 	}
 
 	switch err.(type) {
 	case *net.OpError:
 		return ErrOffline{
-			error: err,
+			err: err.Error(),
 		}
 	default:
 		return err
@@ -32,15 +30,15 @@ func Error(err error) error {
 // ErrInvalidSig occurs when an invalid protocol signature is received.
 var ErrInvalidSig = errors.New("invalid protocol signature")
 
-// ErrConnLost indicates that a remote endpoint dropped a connection.
+// ErrConnClosed indicates that a remote endpoint closed a connection.
 //
 // This error should be used when an io.EOF error is returned from a net operation.
-type ErrConnLost struct {
-	error
+type ErrConnClosed struct {
+	err string
 }
 
-func (e ErrConnLost) String() string {
-	return "network connection to lost"
+func (e ErrConnClosed) Error() string {
+	return "network connection closed"
 }
 
 // An ErrOffline error occurs when a remote endpoint crashes / goes offline.
@@ -53,9 +51,9 @@ func (e ErrConnLost) String() string {
 //   + err.Err.Err.(*syscall.Errno)
 //	   - err.Err.Err.Error() = "An existing connection was forcibly closed by the remote host."
 type ErrOffline struct {
-	error
+	err string
 }
 
-func (e ErrOffline) String() string {
-	return fmt.Sprintf("network endpoint has gone offline. %s", e.error)
+func (e ErrOffline) Error() string {
+	return fmt.Sprintf("network endpoint has gone offline. %s", e.err)
 }

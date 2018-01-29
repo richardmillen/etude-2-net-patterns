@@ -42,7 +42,6 @@ func (l *Listener) Open(gsr GreetSendReceiver) error {
 
 	go func() {
 		defer func() {
-			log.Println("listener done.")
 			l.finished <- true
 		}()
 
@@ -90,7 +89,7 @@ func (l *Listener) GetQueues() []*Queue {
 	for _, q := range l.queues {
 		err := q.Err()
 		if err != nil {
-			log.Printf("error reported by queue '%s': %s\n", q.ID(), err)
+			log.Printf("removing queue '%s': %s\n", q.ID(), err)
 			continue
 		}
 		qs = append(qs, q)
