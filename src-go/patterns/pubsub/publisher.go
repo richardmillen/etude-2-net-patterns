@@ -12,9 +12,9 @@ func NewPublisher(c core.Connector) *Publisher {
 	pub := &Publisher{connector: c}
 
 	pub.connector.OnConnect(pub.onNewConn)
-	pub.ch = make(chan Message, core.DefQueueSize)
+	pub.ch = make(chan Message, pub.connector.QueueSize())
+	pub.err = make(chan error, pub.connector.QueueSize())
 	pub.quit = make(chan bool, 1)
-	pub.err = make(chan error)
 	pub.finished = make(chan bool)
 
 	go pub.run()
@@ -56,10 +56,7 @@ func (pub *Publisher) run() {
 	}()
 
 	err := pub.connector.Open(&pubProtoV1{})
-	pub.err <- err
-	if err != nil {
-		return
-	}
+	pub.setError(err)
 
 	for {
 		select {
@@ -69,6 +66,19 @@ func (pub *Publisher) run() {
 			core.CloseQueues(pub.connector)
 			return
 		}
+	}
+}
+
+func (pub *Publisher) setError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	select {
+	case pub.err <- err:
+		return true
+	default:
+		return false
 	}
 }
 

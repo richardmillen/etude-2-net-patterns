@@ -36,6 +36,11 @@ type Listener struct {
 	finished  chan bool
 }
 
+// QueueSize returns the size used when creating new connection Queues.
+func (l *Listener) QueueSize() int {
+	return l.queueSize
+}
+
 // Open is called to start the listener.
 func (l *Listener) Open(gsr GreetSendReceiver) error {
 	l.gsr = gsr

@@ -18,6 +18,7 @@ type ConnectFunc func(q *Queue) error
 //
 // TODO: create new Queues type and turn ...Queues functions into methods on type(?)
 type Connector interface {
+	QueueSize() int
 	GetQueues() []*Queue
 	Open(gsr GreetSendReceiver) error
 	Close() error

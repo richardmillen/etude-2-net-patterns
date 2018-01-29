@@ -53,8 +53,8 @@ func NewQueue(rw io.ReadWriter, capacity int) *Queue {
 		id: uuid.New(),
 		rw: rw,
 	}
-	q.err = make(chan error, capacity)
 	q.props = make(map[string]interface{})
+	q.err = make(chan error, capacity)
 	q.ch = make(chan interface{}, capacity)
 	q.quit = make(chan bool, 1)
 	q.finished = make(chan bool)

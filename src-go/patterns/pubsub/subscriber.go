@@ -22,7 +22,7 @@ func NewSubscriber(c core.Connector, topics ...string) *Subscriber {
 	}
 
 	sub.connector.OnConnect(sub.onNewConn)
-	sub.ch = make(chan Message, core.DefQueueSize)
+	sub.ch = make(chan Message, sub.connector.QueueSize())
 	sub.quit = make(chan bool, 1)
 	sub.finished = make(chan bool)
 	return sub

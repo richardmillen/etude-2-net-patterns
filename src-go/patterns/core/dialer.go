@@ -17,8 +17,8 @@ func NewDialer(network, address string) *Dialer {
 		Network:    network,
 		RemoteAddr: address,
 		EP:         NewHostEndpoint(),
-		QueueSize:  DefQueueSize,
-		q:          make([]*Queue, 1),
+		queueSize:  DefQueueSize,
+		queues:     make([]*Queue, 0, 1),
 		Dialer: net.Dialer{
 			Timeout: DefDialerTimeout,
 		},
@@ -33,12 +33,17 @@ type Dialer struct {
 	Network    string
 	RemoteAddr string
 	EP         *Endpoint
-	QueueSize  int
-	q          []*Queue
+	queueSize  int
+	queues     []*Queue
 	conn       net.Conn
 	connFunc   ConnectFunc
 	gsr        GreetSendReceiver
 	wgOpen     sync.WaitGroup
+}
+
+// QueueSize returns the size used when creating new connection Queues.
+func (d *Dialer) QueueSize() int {
+	return d.queueSize
 }
 
 // Open is called to initialise the Dialer with a protocol and connect.
@@ -56,22 +61,22 @@ func (d *Dialer) Open(gsr GreetSendReceiver) (err error) {
 	}
 	d.EP.Addr = GetEndpointAddress(d.conn.LocalAddr())
 
-	d.q[0] = NewQueue(d.conn, d.QueueSize)
-	d.q[0].SetProp(PropAddressKey, d.EP.Addr)
+	d.queues = append(d.queues, NewQueue(d.conn, d.QueueSize()))
+	d.queues[0].SetProp(PropAddressKey, d.EP.Addr)
 
 	if d.connFunc != nil {
-		err = d.connFunc(d.q[0])
+		err = d.connFunc(d.queues[0])
 		if err != nil {
 			return
 		}
 	}
 
-	err = d.gsr.Greet(d.q[0])
+	err = d.gsr.Greet(d.queues[0])
 	if err != nil {
 		return
 	}
 
-	err = check.NotNil(d.q[0].sr, "queue send-receiver")
+	err = check.NotNil(d.queues[0].sr, "queue send-receiver")
 	if err != nil {
 		return
 	}
@@ -86,7 +91,7 @@ func (d *Dialer) Open(gsr GreetSendReceiver) (err error) {
 // but it could be extended to support 'n' queues.
 func (d *Dialer) GetQueues() []*Queue {
 	d.wgOpen.Wait()
-	return d.q
+	return d.queues
 }
 
 // Close is called to close any open connections.
