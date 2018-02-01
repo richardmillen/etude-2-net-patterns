@@ -4,7 +4,7 @@ import (
 	"log"
 	"sync"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/core"
 )
 
 // NewPublisher returns a new Publisher that will publish messages to Subscriber's.

@@ -1,7 +1,7 @@
 package pubsub
 
 import (
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/core"
 )
 
 // ProtocolSignature is used to identify messages belonging to the Pub-Sub protocol.

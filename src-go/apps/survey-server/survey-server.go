@@ -8,9 +8,9 @@ import (
 	"os"
 	"os/signal"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/apps/services/echo"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/disco"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/services/echo"
 )
 
 // default port is 0 (zero) in order to use ephemeral port.

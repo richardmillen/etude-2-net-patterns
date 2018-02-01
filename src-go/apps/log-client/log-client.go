@@ -8,7 +8,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/core"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/services/logger"
 )

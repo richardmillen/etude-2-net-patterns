@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/core"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/core"
 	"github.com/richardmillen/etude-2-net-patterns/src-go/patterns/pubsub"
 )
 
