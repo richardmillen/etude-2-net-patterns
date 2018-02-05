@@ -27,6 +27,9 @@ func GetError(err error) error {
 	}
 }
 
+// ErrNoImpl occurs when a package or piece of logic is not implemented.
+var ErrNoImpl = errors.New("not implemented")
+
 // ErrInvalidSig occurs when an invalid protocol signature is received.
 var ErrInvalidSig = errors.New("invalid protocol signature")
 
