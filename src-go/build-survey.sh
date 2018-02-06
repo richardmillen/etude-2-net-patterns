@@ -4,7 +4,7 @@ if [ ! -d "../bin/" ]; then
     mkdir ../bin/
 fi
 
-cd apps
+cd cmd
 
 printf "building 'service discovery' (by survey) apps...\n"
 
