@@ -4,10 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"log"
 	"os"
-
-	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
 )
 
 const (
@@ -21,15 +18,7 @@ var port = flag.Int("port", 5432, "the port to connect to on the host")
 var scanner = bufio.NewScanner(os.Stdin)
 
 func main() {
-	log.Println("starting calc-client...")
-
-	d := netx.NewDialer("tcp", fmt.Sprintf("%s:%d", *server, *port))
-	defer d.Close()
-
-	s := netx.NewService(d, &calcClient{})
-	defer s.Close()
-
-	log.Println("calc-client started.")
+	// ...
 
 	printHelp()
 
@@ -42,8 +31,7 @@ func main() {
 			fmt.Println("quitting...")
 			return
 		default:
-			_, err := s.Write([]byte(input))
-			check.Error(err)
+			// ...
 		}
 	}
 }
