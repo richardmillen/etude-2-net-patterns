@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
@@ -15,10 +17,15 @@ const (
 	cmdQuit string = "quit"
 )
 
+var server = flag.String("server", "localhost", "the name/address of the calc-server host")
+var port = flag.Int("port", 5432, "the port to connect to on the host")
+
 var scanner = bufio.NewScanner(os.Stdin)
 
 func main() {
-	d := core.NewDialer("tcp", "localhost:5432")
+	log.Println("starting calc-client...")
+
+	d := core.NewDialer("tcp", fmt.Sprintf("%s:%d", *server, *port))
 	defer d.Close()
 
 	s := core.NewService(d, &calcClient{})
@@ -34,6 +41,8 @@ func main() {
 		return core.ErrNoImpl
 	})
 	s.Start()
+
+	log.Println("calc-client started.")
 
 	printHelp()
 
@@ -59,6 +68,7 @@ func getInput() string {
 }
 
 func printHelp() {
+	fmt.Println()
 	fmt.Println("----------------------------------------------------------------------------------------------")
 	fmt.Println("commands:")
 	fmt.Printf("\t%s\tprint this help message.\n", cmdHelp)
@@ -75,4 +85,5 @@ func printHelp() {
 	fmt.Println("\t2-2")
 	fmt.Println("\tresult: 0")
 	fmt.Println("----------------------------------------------------------------------------------------------")
+	fmt.Println()
 }

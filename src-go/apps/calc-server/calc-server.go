@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -10,8 +12,12 @@ import (
 	"github.com/richardmillen/etude-2-net-patterns/src-go/core"
 )
 
+var port = flag.Int("port", 5432, "port number to listen at")
+
 func main() {
-	addr, err := net.ResolveTCPAddr("tcp", ":5432")
+	log.Println("starting calc-server...")
+
+	addr, err := net.ResolveTCPAddr("tcp", fmt.Sprintf(":%d", *port))
 	check.Error(err)
 
 	listener, err := core.ListenTCP("tcp", addr)
@@ -32,6 +38,8 @@ func main() {
 	})
 
 	s.Start()
+
+	log.Println("calc-server started.")
 
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, os.Interrupt)
