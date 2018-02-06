@@ -21,7 +21,7 @@ const (
 )
 
 var port = flag.Int("port", 5678, "Port number to listen at.")
-var interval = flag.Int("interval", 100, "Number of milliseconds to pause between each message.")
+var interval = flag.Int("interval", 200, "Number of milliseconds to pause between each message.")
 
 func init() {
 	rand.Seed(time.Now().Unix())
@@ -42,6 +42,8 @@ func main() {
 
 	pub := pubsub.NewPublisher(listener)
 	defer pub.Close()
+
+	pub.Start()
 
 	for {
 		pub.Publish(nextWord())

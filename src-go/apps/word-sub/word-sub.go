@@ -59,6 +59,8 @@ func main() {
 		return
 	})
 
+	sub.Start()
+
 	// we have nothing else to do but wait...
 	<-finished
 

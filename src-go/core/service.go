@@ -14,8 +14,7 @@ func NewService(c Connector, gsr GreetSendReceiver) *Service {
 
 	s.connector.OnConnect(s.onNewConn)
 	s.ch = make(chan interface{}, s.connector.QueueSize())
-	s.err = make(chan error, s.connector.QueueSize())
-	s.quit = make(chan bool, 1)
+	s.quit = make(chan bool, 2)
 
 	return s
 }
@@ -29,10 +28,11 @@ type Service struct {
 	errFunc   ErrorFunc
 	ch        chan interface{}
 	quit      chan bool
-	err       chan error
-	finished  chan bool
 	wgSend    sync.WaitGroup
+	wgFinish  sync.WaitGroup
 }
+
+//finished  chan bool
 
 // Start is called to activate a Service after it has been configured.
 //
@@ -56,16 +56,29 @@ type Service struct {
 // TODO: handle connection errors by retrying.
 // TODO: should we report queue errors to the consumer?
 func (s *Service) Start() {
-	s.finished = make(chan bool)
-
 	go func() {
-		defer func() {
-			log.Println("service finished.")
-			s.finished <- true
-		}()
+		s.wgFinish.Add(1)
+		defer s.wgFinish.Done()
 
 		err := s.connector.Open(s.gsr)
-		s.setError(err)
+		if s.raiseIfError(err) {
+			return
+		}
+
+		go func() {
+			s.wgFinish.Add(1)
+			defer s.wgFinish.Done()
+
+			for {
+				log.Println("waiting for inbound message...")
+				err := RecvQueues(s.connector, s.onRecv, s.onError)
+				if err != nil {
+					log.Println(err)
+					s.quit <- true
+					return
+				}
+			}
+		}()
 
 		for {
 			select {
@@ -74,12 +87,6 @@ func (s *Service) Start() {
 			case <-s.quit:
 				CloseQueues(s.connector)
 				return
-			default:
-				err := RecvQueues(s.connector, s.onRecv, s.onRecvError)
-				if err != nil {
-					CloseQueues(s.connector)
-					return
-				}
 			}
 		}
 	}()
@@ -100,35 +107,31 @@ func (s *Service) onRecv(v interface{}) error {
 	return s.recvFunc(v)
 }
 
-// onRecvError forwards a Queue receive error to the Services ErrorFunc if it's configured.
-func (s *Service) onRecvError(err error) error {
+// onError forwards a Queue receive error to the Services ErrorFunc if it's configured.
+func (s *Service) onError(err error) error {
 	if s.errFunc == nil {
 		return nil
 	}
 	return s.errFunc(err)
 }
 
-func (s *Service) setError(err error) bool {
+func (s *Service) raiseIfError(err error) bool {
 	if err == nil {
 		return false
 	}
 
-	select {
-	case s.err <- err:
-		return true
-	default:
-		return false
-	}
+	s.onError(err)
+	return true
+}
+
+// Send is called to send data to connected endpoint(s).
+func (s *Service) Send(v interface{}) error {
+	SendToQueues(s.connector, v)
+	return nil
 }
 
 // Write writes len(p) bytes from p to connected endpoint(s).
 func (s *Service) Write(p []byte) (n int, err error) {
-	select {
-	case err := <-s.err:
-		return 0, err
-	default:
-	}
-
 	SendToQueues(s.connector, p)
 	return 0, nil
 
@@ -171,10 +174,7 @@ func (s *Service) Recv(recvFunc RecvFunc) {
 // Close is called to stop and invalidate the Service.
 func (s *Service) Close() error {
 	s.wgSend.Wait()
-
-	if s.finished != nil {
-		s.quit <- true
-		<-s.finished
-	}
+	s.quit <- true
+	s.wgFinish.Wait()
 	return nil
 }
