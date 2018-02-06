@@ -12,6 +12,7 @@ const (
 	cmdQuit string = "quit"
 )
 
+var file = flag.String("file", "", "specify a file that contains one or more calculations to be sent to the server e.g. calcs.txt")
 var server = flag.String("server", "localhost", "the name/address of the calc-server host")
 var port = flag.Int("port", 5432, "the port to connect to on the host")
 
