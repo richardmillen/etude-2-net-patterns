@@ -2,13 +2,17 @@
 
 printf "building all apps...\n\n"
 
-cd src-go
+cd src-go/demos
 
-./build-calc.sh
-./build-log.sh
-./build-survey.sh
-./build-word.sh
+# TODO: run demo build scripts.
 
-cd ..
+printf "finished building all demo apps.\n\n"
 
-printf "finished building all apps.\n\n"
+cd ../..
+cd src-go/examples
+
+# TODO: run example build scripts.
+
+cd ../..
+
+printf "finished building all examples.\n\n"
