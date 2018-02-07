@@ -6,22 +6,12 @@ import (
 	"log"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/hello-server/hello"
 )
 
-var port = flag.Int("port", 5432, "port number to listen at")
 var closeBadClients = flag.Bool("close-bad-clients", true, "close the connection to client when invalid message is received, or return an error.")
 
-var (
-	hello = &fsm.String{
-		Hint:  "accept 'hello'",
-		Match: "hello",
-	}
-	hi = &fsm.String{
-		Hint:  "accept 'hi'",
-		Match: "hi",
-	}
-	any = &fsm.Any{}
-)
+var any = &fsm.Any{}
 
 func newServer() (*netx.Service, error) {
 	log.Println("configuring server states...")
@@ -29,8 +19,8 @@ func newServer() (*netx.Service, error) {
 	recvState := &fsm.State{
 		Name: "receiving",
 		Accepts: []fsm.Input{
-			hello,
-			hi,
+			hello.Hello,
+			hello.Hi,
 		},
 	}
 	baseState := &fsm.State{
@@ -44,8 +34,8 @@ func newServer() (*netx.Service, error) {
 	go func() {
 		for {
 			select {
-			case r := <-baseState.Received():
-				buf := make([]byte, r.Len())
+			case r := <-baseState.Received(nil):
+				buf := make([]byte, r.Input.Len())
 				r.Input.Read(buf)
 				log.Println("received invalid message:", buf)
 
@@ -56,8 +46,8 @@ func newServer() (*netx.Service, error) {
 					log.Println("returning error to client...")
 					r.Write([]byte("invalid request"))
 				}
-			case <-baseState.Closed():
-				log.Println("base state closed.")
+			case <-baseState.Exited():
+				log.Println("base state exited.")
 				return
 			}
 		}
@@ -86,16 +76,15 @@ func main() {
 
 	for {
 		select {
-		case r := <-svc.Received():
+		case r := <-svc.Received(nil):
 			switch in := r.Input.(type) {
 			case *fsm.String:
-				log.Println("received:", in)
-				r.Conn.Write([]byte("world"))
+				log.Println("received:", in.From(r))
+				r.Output.Write([]byte("world"))
 			}
 		case <-svc.Interrupt():
 			log.Println("server interrupted.")
 			return
 		}
 	}
-
 }
