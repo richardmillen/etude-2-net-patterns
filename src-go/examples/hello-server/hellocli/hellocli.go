@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/hello-server/input"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/hello-server/msgs"
 )
 
 var server = flag.String("server", "localhost", "server name/address to connect to.")
@@ -24,16 +24,16 @@ func main() {
 	recvState := fsm.NewState("receive")
 	exitState := fsm.NewState("exit")
 
-	sendState.Input(input.Hello, input.Hi)
+	sendState.Input(msgs.Hello, msgs.Hi)
 	sendState.Input(quit).Next(exitState)
 
-	recvState.Input(input.World, input.Error)
+	recvState.Input(msgs.World, msgs.Error)
 	recvState.Substate(sendState)
 
 	dialer := netx.NewDialer("tcp", fmt.Sprintf("%s:%d", *server, *port))
 	defer dialer.Close()
 
-	svc := netx.Service{
+	svc := netx.NewService{
 		Connector:    dialer,
 		InitialState: sendState,
 		FinalState:   exitState,
@@ -43,16 +43,19 @@ func main() {
 	go func() {
 		for {
 			select {
-			case r := <-svc.Received(input.World):
-				fmt.Println("received:", input.World.From(r))
-			case r := <-svc.Received(input.Error):
-				fmt.Println("server error:", input.Error.From(r))
+			case r := <-svc.Received(msgs.World):
+				fmt.Println("received:", msgs.World.From(r))
+			case r := <-svc.Received(msgs.Error):
+				fmt.Println("server error:", msgs.Error.From(r))
 			case <-svc.Closed():
 				fmt.Println("service closed.")
 				return
 			}
 		}
 	}()
+
+	// required because constructor NOT used:
+	svc.Start()
 
 	userInput := bufio.NewScanner(os.Stdin)
 

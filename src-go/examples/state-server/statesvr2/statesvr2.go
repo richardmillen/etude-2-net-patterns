@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/state-server/input"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/state-server/msgs"
 )
 
 var port = flag.Int("port", 5432, "port number to listen at.")
@@ -17,7 +17,7 @@ func main() {
 		Name: "first",
 		Events: []fsm.Event{
 			{
-				Input: input.First,
+				Input: msgs.First,
 				Next:  secondState,
 			},
 		},
@@ -26,7 +26,7 @@ func main() {
 		Name: "second",
 		Events: []fsm.Event{
 			{
-				Input: input.Second,
+				Input: msgs.Second,
 				Next:  thirdState,
 			},
 		},
@@ -35,7 +35,7 @@ func main() {
 		Name: "third",
 		Events: []fsm.Event{
 			{
-				Input: input.Third,
+				Input: msgs.Third,
 				Next:  doneState,
 			},
 		},
@@ -52,13 +52,13 @@ func main() {
 		InitialState: firstState,
 		FinalState:   doneState,
 	}
+	defer svc.Close()
+	svc.Start()
 
 	for {
 		select {
-		case c := <-svc.Connected():
-			c.Write([]byte(c.State().Name()))
 		case e := <-svc.EnteredState():
-			e.Write([]byte(e.State().Name()))
+			e.State().Write([]byte(e.State().Name()))
 		case <-svc.Closed():
 			fmt.Println("service closed.")
 			return

@@ -1,4 +1,4 @@
-package input
+package msgs
 
 var (
 	First = &fsm.String{
