@@ -6,10 +6,11 @@ import (
 	"log"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/hello-server/hello"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/hello-server/input"
 )
 
 var closeBadClients = flag.Bool("close-bad-clients", true, "close the connection to client when invalid message is received, or return an error.")
+var port = flag.Int("port", 5432, "port number to listen on")
 
 var any = &fsm.Any{}
 
@@ -19,8 +20,8 @@ func newServer() (*netx.Service, error) {
 	recvState := &fsm.State{
 		Name: "receiving",
 		Accepts: []fsm.Input{
-			hello.Hello,
-			hello.Hi,
+			input.Hello,
+			input.Hi,
 		},
 	}
 	baseState := &fsm.State{

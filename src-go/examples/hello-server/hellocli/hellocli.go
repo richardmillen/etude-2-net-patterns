@@ -6,10 +6,11 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/hello-server/hello"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/hello-server/input"
 )
 
 var server = flag.String("server", "localhost", "server name/address to connect to.")
+var port = flag.Int("port", 5432, "server port number to connect to.")
 
 var quit = &fsm.String{
 	Hint:  "'quit' command",
@@ -23,10 +24,10 @@ func main() {
 	recvState := fsm.NewState("receive")
 	exitState := fsm.NewState("exit")
 
-	sendState.Input(hello.Hello, hello.Hi)
+	sendState.Input(input.Hello, input.Hi)
 	sendState.Input(quit).Next(exitState)
 
-	recvState.Input(hello.World, hello.Error)
+	recvState.Input(input.World, input.Error)
 	recvState.Substate(sendState)
 
 	dialer := netx.NewDialer("tcp", fmt.Sprintf("%s:%d", *server, *port))
@@ -42,10 +43,10 @@ func main() {
 	go func() {
 		for {
 			select {
-			case r := <-svc.Received(hello.World):
-				fmt.Println("received:", hello.World.From(r))
-			case r := <-svc.Received(hello.Error):
-				fmt.Println("server error:", hello.Error.From(r))
+			case r := <-svc.Received(input.World):
+				fmt.Println("received:", input.World.From(r))
+			case r := <-svc.Received(input.Error):
+				fmt.Println("server error:", input.Error.From(r))
 			case <-svc.Closed():
 				fmt.Println("service closed.")
 				return
