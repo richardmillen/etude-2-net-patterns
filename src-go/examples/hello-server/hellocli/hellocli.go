@@ -23,9 +23,10 @@ func main() {
 	recvState := fsm.NewState("receive")
 	exitState := fsm.NewState("exit")
 
-	sendState.Accept(hello.Hello, hello.Hi, quit)
-	recvState.Accept(hello.World, hello.Error)
+	sendState.Input(hello.Hello, hello.Hi)
+	sendState.Input(quit).Next(exitState)
 
+	recvState.Input(hello.World, hello.Error)
 	recvState.Substate(sendState)
 
 	dialer := netx.NewDialer("tcp", fmt.Sprintf("%s:%d", *server, *port))
@@ -45,8 +46,6 @@ func main() {
 				fmt.Println("received:", hello.World.From(r))
 			case r := <-svc.Received(hello.Error):
 				fmt.Println("server error:", hello.Error.From(r))
-			case r := <-svc.Received(quit):
-				// TODO: transition to exitState => how to implement transitions?
 			case <-svc.Closed():
 				fmt.Println("service closed.")
 				return
