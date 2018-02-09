@@ -1,4 +1,9 @@
-// TODO: add comments & notes.
+// the 'arithmetic' server accepts a sequence of messages from a client then when
+// the sequence is complete performs the arithmetical operation and returns the
+// result to the client.
+//
+// this example would support only a single basic arithmetic operation on two 32-bit
+// floating point values i.e. 3.0f+7.0f, 9.0f/9.0f and so on.
 
 package main
 
@@ -12,54 +17,7 @@ import (
 
 var port = flag.Int("port", 5432, "port number to listen at")
 
-const opersExpr = `[\+\-/\*]`
-
-type operator struct {
-	fsm.Regex
-}
-
 var (
-	num = &fsm.Float{
-		Hint: "numeric operand",
-	}
-	op     = &operator{}
-	equals = &fsm.String{
-		Hint:  "equals sign",
-		Match: "=",
-	}
-	any = &fsm.Any{}
-)
-
-var (
-	numState = &fsm.State{
-		Name: "number",
-		Events: []*fsm.Event{
-			{
-				Input: num,
-				MoveTo: []*fsm.State{
-					opState,
-					calcState,
-				},
-			},
-		},
-	}
-	opState = &fsm.State{
-		Name: "operator",
-		Events: []*fsm.Event{
-			{
-				Input:  op,
-				MoveTo: []*fsm.State{numState},
-			},
-		},
-	}
-	calcState = &fsm.State{
-		Name: "calculate",
-		Events: []*fsm.Event{
-			{
-				Input: num,
-			},
-		},
-	}
 	errorState = &fsm.State{
 		Name: "error",
 		Events: []*fsm.Event{
@@ -75,16 +33,23 @@ var (
 	}
 )
 
+// calculation represents an ongoing calculation being performed for a client.
+// it embeds a hypothetical netx.Conn type (needs a better name!) that is the
+// connection to the client.
+// the purpose of this type is to maintain state until the calculation can be
+// performed and the result returned to the client.
 type calculation struct {
 	netx.Conn
-	operands  []float32
-	operators []*operator
+	operands []float32
+	operator *operator
 }
 
+// newCalculation is required in order for the Service's Listener to construct
+// a 'calculation' rather than a basic netx.Conn.
+// see the call to netx.Listener.SetConstructor() below.
 func newCalculation() *netx.Conn {
 	return &calculation{
-		operands:  make([]float32, 0, 2),
-		operators: make([]*operator, 0, 1),
+		operands: make([]float32, 0, 2),
 	}
 }
 
@@ -111,14 +76,14 @@ func main() {
 			calc.operands = append(calc.operands, num.From(r))
 		case r := <-svc.ReceivedInput(op):
 			calc := r.State.(calculation)
-			calc.operators = append(calc.operators, op.From(r))
-		case e := <-svc.EnteredState(calcState):
-			calc := e.State.(calculation)
-			result := calc.operators[0].Oper(calc.operands[0], calc.operands[1])
-			num.Copy(result, calc)
+			calc.operators = op.From(r)
 		case r := <-svc.ReceivedInput(any):
 			log.Println("received:", r.Input)
 			e.State.Write([]byte(fmt.Sprintf("invalid message: %v", r.Input)))
+		case e := <-svc.EnteredState(calcState):
+			calc := e.State.(calculation)
+			result := calc.operators[0].oper(calc.operands[0], calc.operands[1])
+			num.Copy(result, calc)
 		case <-svc.Closed():
 			log.Println("service closed.")
 			return

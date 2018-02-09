@@ -1,4 +1,16 @@
-// TODO: add comments / notes.
+// the arithmetic client sends a series of basic arithmetical expressions to a remote
+// server which returns the result.
+//
+// each arithmetical expression is sent piece by piece i.e.
+// 		1. operand
+//		2. operator
+//		3. operand
+// the server then returns the result.
+//
+// this implementation only supports very simple arithmetic operations i.e. n+n, n/n etc.
+// where 'n' is a 32-bit float.
+//
+// TODO: finish this example.
 
 package main
 
@@ -9,6 +21,7 @@ import (
 	"time"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/arithmetic-server/msgs"
 )
 
 const (
@@ -39,7 +52,7 @@ func main() {
 		for {
 			select {
 			case r := <-svc.Received():
-				// TODO: process received.
+				fmt.Println("received:", r.Input)
 			case <-svc.Closed():
 				fmt.Println("service closed.")
 				return
@@ -48,14 +61,25 @@ func main() {
 	}()
 
 	for n := 0; n < *calcCount; n++ {
-		v1 := rand.Int() + 1
-		num.Copy(v1, svc)
+		a := rand.Int() + 1
+		op := getRandomOperator()
+		b := rand.Int() + 1
 
-		// TODO: send operator, then second operand to service.
+		msgs.Num.Copy(a, svc)
+		msgs.Op.Copy(op, svc)
+		msgs.Num.Copy(b, svc)
 	}
 }
 
-// TODO: make random.
 func getRandomOperator() string {
-	return "+"
+	switch rand.Intn(3) {
+	case 0:
+		return "*"
+	case 1:
+		return "/"
+	case 2:
+		return "+"
+	case 3:
+		return "-"
+	}
 }
