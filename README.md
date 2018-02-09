@@ -1,6 +1,30 @@
 # Étude 2 - Networking Patterns
 
-A study of networking patterns over TCP & UDP, with implementations in Go & C++.
+A study of networking patterns over TCP & UDP, with implementations in Go & *(eventually)* C++.
+
+## v0.1
+
+Having had a degree of success with my initial investigations, I didn't like the direction it was
+heading. I needed to make substantive changes to the supporting packages, so to avoid the overhead of technical debt, I've opted to start over.
+
+## v0.2
+
+This time around I've elected to go with a more state-centric design for a number of reasons:
+
++ self-documenting protocol; define inputs, define states that accept specific inputs etc.
++ it could help promote a more declarative style
++ various strategies e.g. heartbeating, beacons, ping-pong and so forth can be implemented as concurrent states in a hierarchical state machine. this should help with composability.
++ simplifies how invalid messages are handled.
+
+This approach does come with some inherent complexities / liabilities. Namely:
+
++ ensuring each automaton remains isolated. for instance, a server will have at least one connection for each remote client and each of those connections may be in different state.
++ input events will be coming from two places; the network and the api consumer. depending on the situation, network traffic will often be validated, but under what circumstances should the input from our own code be validated? if a server receives a valid request from a client, should the servers response also be validated?
++ what happens when a state machine reaches it's defined *final state* ? close the connection? do nothing? return to the *initial state*?
+
+
+
+
 
 ## Pub-Sub
 
