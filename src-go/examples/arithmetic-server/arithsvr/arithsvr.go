@@ -2,8 +2,12 @@
 // the sequence is complete performs the arithmetical operation and returns the
 // result to the client.
 //
-// this example would support only a single basic arithmetic operation on two 32-bit
+// this example supports only a single basic arithmetic operation on two 32-bit
 // floating point values i.e. 3.0f+7.0f, 9.0f/9.0f and so on.
+//
+// note the use of 'Service.ReceivedInput(fsm.Input)' which allows the API consumer
+// to specify which input it's expecting to receive. this differs from the catch-all
+// 'Service.Received()'.
 
 package main
 
@@ -13,6 +17,7 @@ import (
 	"log"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
+	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/arithmetic-server/msgs"
 )
 
 var port = flag.Int("port", 5432, "port number to listen at")
@@ -22,7 +27,7 @@ var (
 		Name: "error",
 		Events: []*fsm.Event{
 			{
-				Input: any,
+				Input: msgs.Any,
 			},
 		},
 		Substates: []*fsm.State{
@@ -41,7 +46,7 @@ var (
 type calculation struct {
 	netx.Conn
 	operands []float32
-	operator *operator
+	operator *msgs.Operator
 }
 
 // newCalculation is required in order for the Service's Listener to construct
@@ -79,11 +84,13 @@ func main() {
 			calc.operators = op.From(r)
 		case r := <-svc.ReceivedInput(any):
 			log.Println("received:", r.Input)
-			e.State.Write([]byte(fmt.Sprintf("invalid message: %v", r.Input)))
+			r.State.Write([]byte(fmt.Sprintf("invalid message: %v", r.Input)))
+
+		//case e := <-calcState.Entered():
 		case e := <-svc.EnteredState(calcState):
 			calc := e.State.(calculation)
-			result := calc.operators[0].oper(calc.operands[0], calc.operands[1])
-			num.Copy(result, calc)
+			result := calc.operators[0].Oper(calc.operands[0], calc.operands[1])
+			calc.Send(result)
 		case <-svc.Closed():
 			log.Println("service closed.")
 			return

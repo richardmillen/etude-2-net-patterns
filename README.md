@@ -2,31 +2,60 @@
 
 A study of networking patterns over TCP & UDP, with implementations in Go & *(eventually)* C++.
 
-## v0.1
+## Notes on Versions
 
-Having had a degree of success with my initial investigations, I didn't like the direction it was
-heading. I needed to make substantive changes to the supporting packages, so to avoid the overhead of technical debt, I've opted to start over.
+### v0.1
 
-## v0.2
+*n.b. Having had a degree of success with my initial investigations, I didn't like the direction it was
+heading. I needed to make substantive changes to the supporting packages, so to avoid the overhead of working through the technical debt, I opted to start over.*
 
-This time around I've elected to go with a more state-centric design for a number of reasons:
+### v0.2
 
-+ self-documenting protocol; define inputs, define states that accept specific inputs etc.
-+ it could help promote a more declarative style
+For this version I've elected to go with a more state-centric design for a number of reasons:
+
++ self-documenting protocol; define states that accept defined inputs etc.
++ it should help promote a more declarative style
 + various strategies e.g. heartbeating, beacons, ping-pong and so forth can be implemented as concurrent states in a hierarchical state machine. this should help with composability.
 + simplifies how invalid messages are handled.
 
-This approach does come with some inherent complexities / liabilities. Namely:
+This approach does come with some inherent complexities / liabilities including:
 
 + ensuring each automaton remains isolated. for instance, a server will have at least one connection for each remote client and each of those connections may be in different state.
-+ input events will be coming from two places; the network and the api consumer. depending on the situation, network traffic will often be validated, but under what circumstances should the input from our own code be validated? if a server receives a valid request from a client, should the servers response also be validated?
-+ what happens when a state machine reaches it's defined *final state* ? close the connection? do nothing? return to the *initial state*?
++ input events will be coming from two places; the network and the api consumer. should all input require an associated input event to be defined against the state? if a server receives a valid request from a client, should the servers response also be known to the current state whether it requires validation or not?
++ network traffic will often be validated, but under what circumstances should the input from the API consumer code be validated?
++ what happens when a state machine reaches it's defined *final state* ? close the connection? do nothing? return to the *initial state*? to what extent should this behaviour be configurable?
++ internal vs. external events? to what extent should they be differentiated? does `myState.HandleSomeEvent` represent an internal event while `myService.HandleSomeEvent` represents an external one? should they be defined different on the state i.e. `fsm.State{InternalEvents: ..., ExternalEvents: ...}` ?
+
+#### fsm Package
+
+Contains the core finite-state machine types e.g.
+
++ `State` struct: represents a single state within an automaton.
++ `Input` interface: all inputs into a state machine would implement this interface.
 
 
 
 
 
-## Pub-Sub
+#### netx Package
+
+Contains all the networking types. Built upon types in the `fsm` package.
+
++ `Connector` interface: establishes connections between endpoints.
++ `Conn` struct: built on top of `net.Conn`. *flyweight* State Machine.
++ `Listener` struct: accepts and creates `netx.Conn`s to remote endpoints. implements `Connector` interface.
++ `Dialer` struct: establishes a `netx.Conn` with remote Service. implements `Connector` interface.
++ `Service` struct: main object through which the consumer interacts. likely to be composed of and/or implement one or more types from the `fsm` package.
+
+*(package needs a better name!)*
+
+
+
+
+
+## Notes on Architectures & Patterns
+
+### Pub-Sub
 
 > Publisher sends a stream of messages.  
 > Subscriber receives messages related to one, or more topics.  
@@ -37,9 +66,9 @@ This approach does come with some inherent complexities / liabilities. Namely:
 + high water mark (HWM)
 + timestamps; abort threshold / latency
 
-## Service Discovery
+### Service Discovery
 
-### UDP Surveys
+#### UDP Surveys
 
 + message
   - ...
@@ -47,15 +76,15 @@ This approach does come with some inherent complexities / liabilities. Namely:
 
 *n.b. what about local service discovery?*
 
-## Service Presence
+### Service Presence
 
-### UDP Beacons
+#### UDP Beacons
 
 + message
   - header: "FOO1"
   - body: service TCP port
 
-## Broker
+### Broker
 
 + message:
   - proto-sig
@@ -93,13 +122,13 @@ This approach does come with some inherent complexities / liabilities. Namely:
 
 *n.b. can interconnect & failover be the same i.e. peer broker becomes clone during downtime?*
 
-## Disconnected / Offline Service
+### Disconnected / Offline Service
 
 > Receives client requests meant for another service via the Broker.   
 > Acts on the clients behalf, calling the service at the appropriate time.  
 > Provides results to client upon request.
 
-## Parallel Pipeline
+### Parallel Pipeline
 
 + ventilator
 + workers
@@ -107,7 +136,7 @@ This approach does come with some inherent complexities / liabilities. Namely:
 + vent == broker *(?)*
 + sink == client *(akin to GFS chunk servers)*
 
-### Pipelining
+#### Pipelining
 
 + credit-based *(async)* flow control
 + e.g. large files
@@ -115,7 +144,7 @@ This approach does come with some inherent complexities / liabilities. Namely:
 + encryption
 + interruption; resume after disconnect
 
-## P2P / Decentralised
+### P2P / Decentralised
 
 + UDP
   - beacons *(as above)*
@@ -143,7 +172,7 @@ This approach does come with some inherent complexities / liabilities. Namely:
   - change counter; rolling 1 byte buffer
 + *mediator*; elected
 
-### Problems
+#### Problems
 
 + peer discovery
 + interop w/ existing networks
@@ -155,7 +184,7 @@ This approach does come with some inherent complexities / liabilities. Namely:
 + wide-area bridging
 + configuration
 
-## The zguide
+## Origins *(the zguide)*
 
 Much of this study is inspired by the ZeroMQ '[zguide](http://zguide.zeromq.org/page:all)'.
 

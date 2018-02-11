@@ -19,7 +19,6 @@ func (o Operator) Oper(a float32, b float32) (result float32) {
 }
 
 var (
-	// Num is a numeric operand.
 	Num = &fsm.Float{
 		Hint: "numeric operand",
 	}

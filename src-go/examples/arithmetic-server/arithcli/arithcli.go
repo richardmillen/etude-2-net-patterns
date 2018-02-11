@@ -10,7 +10,17 @@
 // this implementation only supports very simple arithmetic operations i.e. n+n, n/n etc.
 // where 'n' is a 32-bit float.
 //
-// TODO: finish this example.
+// n.b. type safety is moot (if not misplaced) at the point where data is passed into the
+// Server because validation (and serialisation) would be performed within the Service by
+// the current State, or more accurately by the fsm.Input on the associated event (fsm.Event).
+// so code such as the following which copies values to the Service using the relevant
+// input types resembles what would happen within a simple call to Service.Send()/.Execute()
+// (or whatever the API ends up looking like):
+//
+// msgs.Num.Copy(a, svc)
+// msgs.Op.Copy(op, svc)
+// msgs.Num.Copy(b, svc)
+//
 
 package main
 
@@ -21,7 +31,6 @@ import (
 	"time"
 
 	"github.com/richardmillen/etude-2-net-patterns/src-go/check"
-	"github.com/richardmillen/etude-2-net-patterns/src-go/examples/arithmetic-server/msgs"
 )
 
 const (
@@ -44,9 +53,8 @@ func main() {
 	check.Error(err)
 	defer dialer.Close()
 
-	svc := netx.Service{
-		Connector: dialer,
-	}
+	svc := netx.NewService(dialer)
+	defer svc.Close()
 
 	go func() {
 		for {
@@ -65,9 +73,9 @@ func main() {
 		op := getRandomOperator()
 		b := rand.Int() + 1
 
-		msgs.Num.Copy(a, svc)
-		msgs.Op.Copy(op, svc)
-		msgs.Num.Copy(b, svc)
+		svc.Send(a)
+		svc.Send(op)
+		svc.Send(b)
 	}
 }
 
