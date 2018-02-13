@@ -1,3 +1,5 @@
+// 'state' server #2 ...
+
 package main
 
 import (

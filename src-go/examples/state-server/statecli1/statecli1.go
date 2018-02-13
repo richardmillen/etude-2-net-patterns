@@ -1,6 +1,6 @@
 // state client #1 enters a receiving state (opening a connection to a 'state' server),
 // receives three specific messages (it doesn't care which order) then the server closes
-// the connection and the client exits.
+// the connection and the client exits. all other messages will be ignored.
 
 package main
 

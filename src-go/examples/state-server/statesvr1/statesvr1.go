@@ -1,7 +1,10 @@
 // the 'state' server example #1 sends a sequence of messages to clients immediately
-// after they connect, then upon reaching the end of the sequence closes the connection.
-// an 'extra' state (and resulting message) can be enabled via a command line flag that
-// will test the clients response to unexpected messages.
+// after they connect, each message corresponding to a different state. once the
+// final state is reached and the all messages have been sent the connection to the
+// client is closed.
+// an 'extra' state can be enabled via a command line flag which causes the server to
+// send an unknown / unexpected message to the client. the resulting client behaviour
+// is dependent upon the version used.
 
 package main
 
