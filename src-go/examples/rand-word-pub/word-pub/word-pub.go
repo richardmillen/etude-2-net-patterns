@@ -1,4 +1,8 @@
-// random(ish) word publisher (server)
+// this application publishes random(ish) words in a few different languages to subscribers.
+// the server works on a fire & forget basis so late joiners will never receive previously
+// sent messages unless the 'word-lvc' app is used.
+// subscribers are able to receive all updates for one or more of the languages (topics).
+
 package main
 
 import (

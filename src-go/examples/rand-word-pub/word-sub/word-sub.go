@@ -1,12 +1,20 @@
-// random(ish) word subscriber (client)
+// this application subscribes to a never ending series of live messages
+// (random words) sent by a publisher (either 'word-pub' or 'word-lvc').
+// the app can subscribe to words in one or more languages (topics);
+// 'eng', 'fra' & 'esp'.
+//
+// if this app subscribes directly to a 'word-pub' instance then it will receive
+// messages as & when they are sent by the publisher. on the other hand, if it
+// subscribes to a 'word-lvc' instance then it will receive an update (the most
+// recent relevant message/s) immediately after a connection is established instead
+// of having to wait for the next 'live' message.
+
 package main
 
 import (
 	"flag"
 	"fmt"
 	"log"
-
-	"github.com/richardmillen/etude-2-net-patterns/src-go/v0/core"
 )
 
 const (

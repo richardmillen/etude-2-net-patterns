@@ -1,3 +1,10 @@
+// the hello world client allows the user to enter string messages to be sent to
+// a hello word server. however only "hi" and "hello" are valid request messages.
+// entering "quit" will shut down the client service and terminate the application.
+//
+// note that the client Service must be started somehow in order to spawn background
+// goroutines etc. this example does so explicitly with a call to Service.Start().
+
 package main
 
 import (
@@ -54,7 +61,6 @@ func main() {
 		}
 	}()
 
-	// required because constructor NOT used:
 	svc.Start()
 
 	userInput := bufio.NewScanner(os.Stdin)

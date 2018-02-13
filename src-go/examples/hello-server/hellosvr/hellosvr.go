@@ -1,3 +1,6 @@
+// the hello world server accepts "hi" and "hello", responding with "world", otherwise
+// an error message is returned.
+
 package main
 
 import (
