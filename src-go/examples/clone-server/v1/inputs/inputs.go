@@ -7,8 +7,8 @@ var (
 		Match: "HELLO",
 	}
 
-	// HiBoss is sent from a secondary server to a primary server.
-	HiBoss = &HiPrimaryInput{}
+	// HiPrimary is sent from a secondary server to a primary server.
+	HiPrimary = &HiPrimaryInput{}
 
 	// HiAgain is sent from a secondary server to a primary server.
 	HiAgain = &fsm.String{
