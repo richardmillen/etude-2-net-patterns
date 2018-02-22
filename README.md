@@ -47,8 +47,6 @@ Contains all the networking types. Built upon types in the `fsm` package.
 + `Dialer` struct: establishes a `netx.Conn` with remote Service. implements `Connector` interface.
 + `Service` struct: main object through which the consumer interacts. likely to be composed of and/or implement one or more types from the `fsm` package.
 
-*(package needs a better name!)*
-
 
 
 

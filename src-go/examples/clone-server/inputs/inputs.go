@@ -1,23 +1,31 @@
 package inputs
 
 var (
-	// Hello sent from client to server.
-	Hello = &fsm.String{
+	// HelloServer sent from client to server.
+	HelloServer = &fsm.String{
 		Hint:  "Initial message sent from client to server",
 		Match: "HELLO",
 	}
 
-	// NeedList is sent from client to server.
-	NeedList = &fsm.String{
-		Hint:  "Initial message sent from server to a primary server",
-		Match: "NEEDLIST",
+	// HiBoss is sent from a secondary server to a primary server.
+	HiBoss = &HiPrimaryInput{}
+
+	// HiAgain is sent from a secondary server to a primary server.
+	HiAgain = &fsm.String{
+		Hint:  "Message requesting active server list",
+		Match: "HIAGAIN",
 	}
 
-	// Greeting is the first response message sent to either a client or non-primary server.
+	// Greeting is the response message sent to either a client or secondary server.
 	Greeting = &GreetingInput{}
+
 	// Any input accepted.
 	Any = &fsm.Any{}
 )
+
+// HiPrimaryInput describes a valid state machine input of type msgs.HiPrimary
+type HiPrimaryInput struct {
+}
 
 // GreetingInput describes a valid state machine input of type msgs.Greeting
 type GreetingInput struct {
