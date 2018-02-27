@@ -1,37 +1,63 @@
 # Clone Server Example
 
-the clone server is a simple echo server, but with some important differences.
+The clone server is a simple echo server, but with some important differences.
 
-this app can be started with the address of another server instance from which
-it will obtain a list of active instances before it starts listening for client
-requests. then whenever a client connects it will be given a list of known good
-server addresses.
+The server app may be started as a **Helper**, where the address of a peer server
+instance is specified via the commandline flag `--tbc`.
 
-## clone server
+The server given to a **Helper** is referred to as the **Primary Lookup** server
+instance for the **Helper**. The **Helper** sends a message to the **Primary Lookup**
+telling it that it's available to help and then periodically requests an up-to-date
+**Active List** of peers which includes other **Helper**s known to the **Primary Lookup**
+server.
 
-acts as a simple echo server to clients, returning a list of other active servers
-to clients when a new connection is established.
+The client app receives the latest **Active List** immediately after connecting 
+to a server. It then requests updates periodically.
 
-note that a clone server must either be acting as 'primary' or 'secondary' and
-cannot be both. this limitation makes the example a less realistic implementation,
-but reduces complexity.
+The example is designed to support basic redundancy, where
 
-## primary server
+1. The most active **Helper** will be promoted to **Primary Lookup** server if the **Primary Lookup** server goes offline.
+1. The client app sends requests to the current active server.......
 
-acts as a clone server.
+The list of *active* servers is returned directly, or indirectly by a **Primary Lookup**
+is sorted by server *liveness* (how active the servers are) and hence resembles a 
+priority queue.
 
-maintains a list of active servers which are sent to 'secondary' servers upon
-request. started by running a clone server without the '--primary-server' flag.
+## Modeling / Notes
 
-if a primary server disappears then the latest active server list is traversed
-from top to bottom until a server is able to assume its new role as primary.
+### Start Server
 
-## secondary server
++ have peer address?
+    - send `HERETOHELP` (inc. *this* server address)
+    - receive `THX` (inc. **Active List**)
+    - run "Refresh Lookup List" *(run concurrently)*
++ listen *(loop)*
+    - receive `GETSERVERS`
+        - from server in **Helper List**?
+            - update *liveness*
+        - send **Active List** (*this* + **Lookup List** + **Helper List**)
+    - receive `HERETOHELP`
+        - from server in **Lookup List**?
+            - remove from list
+        - add server to **Helper List**
+        - send **Active List** (*this* + **Lookup List** + **Helper List**)
+    - receive `ECHO`
+        - send `ECHO`
 
-acts as a clone server.
+### Refresh Lookup List
 
-sends it's own clone server address to the primary server specified using the
-'--primary-server' flag. receives a list of known good clone servers (possibly
-including itself) from the primary server.
++ wait (based on *liveness* of **Active Lookup**; exponential back-off)
++ refresh
+    - send `GETSERVERS` (to **Active Lookup** server)
+    - receive **Lookup List**
+    - go to 'wait'
+    - **ERROR**:
+        - update server *liveness*
+        - go to 'refresh'
+
+
+
+
+
 
 
