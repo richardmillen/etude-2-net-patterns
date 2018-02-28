@@ -46,14 +46,14 @@ priority queue.
 
 ### Refresh Lookup List
 
-+ wait (based on *liveness* of **Active Lookup**; exponential back-off)
-+ refresh
++ wait (based on *liveness* of **Active Lookup** server; exponential back-off)
++ start refresh
     - send `GETSERVERS` (to **Active Lookup** server)
     - receive **Lookup List**
     - go to 'wait'
     - **ERROR**:
         - update server *liveness*
-        - go to 'refresh'
+        - go to 'start refresh'
 
 
 
