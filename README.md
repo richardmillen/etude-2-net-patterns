@@ -2,6 +2,16 @@
 
 A study of networking patterns over TCP & UDP, with implementations in Go & *(eventually)* C++.
 
+## Examples
+
+The examples start small & simple, increasing in size & complexity. They aren't intended to be useful applications, but explore one or more aspects of distributed computing.
+
+Each one contains a readme which is kind of a mini spec, providing high-level information and low-level protocol details.
+
+## Demos
+
+The demo folder contains reasonably complete apps & simulations. Each one comes with its own readme much like the examples.
+
 ## Notes on Versions
 
 ### v0.1
