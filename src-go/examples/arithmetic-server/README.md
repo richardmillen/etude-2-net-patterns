@@ -1,9 +1,0 @@
-# Arithmetic Server Example
-
-
-
-
-
-
-
-
