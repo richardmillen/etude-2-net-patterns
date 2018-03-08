@@ -6,7 +6,13 @@ A study of networking patterns over TCP & UDP, with implementations in Go & *(ev
 
 The examples start small & simple, increasing in size & complexity. They aren't intended to be useful applications, but explore one or more aspects of distributed computing.
 
-Each one contains a readme which is kind of a mini spec, providing high-level information and low-level protocol details.
+Each one has an associated a readme which is kind of a mini spec, providing high-level information and low-level protocol details.
+
+1. [Echo Server](docs/EchoServer.md)
+1. [Hello World Server](docs/HelloWorldServer.md)
+1. [State Server](docs/StateServer.md)
+1. [Arithmetic Server](docs/ArithmeticServer.md)
+1. [Timeouts](docs/Timeouts.md)
 
 ## Demos
 
