@@ -6,7 +6,7 @@ It is the simplest of the examples, covering basic usage of the API in a client-
 
 ## Goals
 
-Initial exploration of an API, where a client application sends an arbitrary text message to a server which echoes the message back to the client.
+Initial exploration of a state-centric API, where a client application sends an arbitrary text message to a server which echoes the message back to the client.
 
 
 
