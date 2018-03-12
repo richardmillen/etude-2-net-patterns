@@ -26,20 +26,3 @@ This example doesn't use different message types, protocol signatures, message f
 All messages are sent between nodes in plain text.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
