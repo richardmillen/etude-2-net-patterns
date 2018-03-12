@@ -17,13 +17,9 @@ The server echoes the message back to the client. The client displays the respon
 
 This example doesn't use different message types, protocol signatures, message frames, or commands.
 
-### Client States
+### States
 
-
-
-### Server States
-
-
+![client & server state diagrams](../images/EchoServer-StateDiagrams.jpg)
 
 ## Security
 
