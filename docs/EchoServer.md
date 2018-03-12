@@ -19,7 +19,7 @@ This example doesn't use different message types, protocol signatures, message f
 
 ### States
 
-![client & server state diagrams](../images/EchoServer-StateDiagrams.jpg)
+![client & server state diagrams](../images/EchoServer-StateDiagrams.png)
 
 ## Security
 
