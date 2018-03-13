@@ -8,7 +8,7 @@ Explores the use of a hierarchical state machine *(HSM)* as a mechansim for defi
 
 The goals are to:
 
-+ Define a simple server protocol.
++ Define a simple protocol.
 + Explore possible implementations of an HSM.
 + Demonstrate different strategies for responding to invalid client requests.
 
@@ -16,10 +16,24 @@ The goals are to:
 
 ### Overall Behaviour
 
-The hello world client allows the user to enter string messages to be sent to a 
-hello word server. Only "hello" is a valid request message. "hi" will result in
-an error response from the server. Any other request will be ignored by the server.
-Entering "quit" will shut down the client service and terminate the application.
+The hello world client provides an interface for sending valid and invalid request
+messages<sup>1</sup> to a remote hello world server.
+
+If a client sends a valid message with a body of "hello" then the server will 
+respond with "world".
+
+If a client sends a valid message containing any text besides "hello"<sup>2</sup> 
+then the server will send an error response.
+
+If a client sends an invalid message then the server will ignore the message,
+leaving the connection open to the client.
+
+If the user enters "quit" then the client will send a `bye` message to the server
+and terminate.
+
+*1. See formal grammar below for definition of valid request message.*
+
+*2. Message comparison is case-sensitive.*
 
 ### States
 
@@ -30,7 +44,32 @@ Entering "quit" will shut down the client service and terminate the application.
 The following ABNF grammar defines the protocol:
 
 ```abnf
-; TODO: add grammar here.
+;       Client sends valid request
+hello               = signature %d1 hello_body
+hello_body          = number-1 %s"hello"
+
+;       Server sends OK response to client
+world               = signature %d2 world_body
+world_body          = number-1 %s"world"
+
+;       Server tells client it sent an invalid message
+rtfm                = signature %d3 reason
+reason              = string
+
+;       Client closes the session
+bye                 = signature %d4
+
+;       Included for illustration purposes
+valid_request       = signature number-1 [string]
+
+;       Protocol signature: "HW" (two octets)
+signature           = %x48 %x57
+
+;       Short printable string with length prefix (max. 255 chars)
+string              = number-1 *VCHAR
+
+;       Number stored in single OCTET
+number-1            = 1OCTET
 ```
 
 ## Security
