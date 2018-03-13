@@ -45,12 +45,12 @@ The following ABNF grammar defines the protocol:
 
 ```abnf
 ;       Client sends valid request
-hello               = signature %d1 hello_body
-hello_body          = number-1 %s"hello"
+hello               = signature %d1 hello-body
+hello-body          = number-1 %s"hello"
 
 ;       Server sends OK response to client
-world               = signature %d2 world_body
-world_body          = number-1 %s"world"
+world               = signature %d2 world-body
+world-body          = number-1 %s"world"
 
 ;       Server tells client it sent an invalid message
 rtfm                = signature %d3 reason
@@ -60,7 +60,7 @@ reason              = string
 bye                 = signature %d4
 
 ;       Included for illustration purposes
-valid_request       = signature number-1 [string]
+valid-request       = signature number-1 [string]
 
 ;       Protocol signature: "HW" (two octets)
 signature           = %x48 %x57
