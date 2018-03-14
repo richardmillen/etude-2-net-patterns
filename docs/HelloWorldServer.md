@@ -1,6 +1,8 @@
 # Example 2: Hello World Server
 
-Simple Hello World client-server example, where a client receives a "world" response from a remote server if and only if a "hello" request is sent.
+Simple Hello World client-server example, where a client sends "hello" and receives a response "world". 
+
+Other messages from the client result in different behaviour.
 
 ## Goals
 
@@ -23,13 +25,12 @@ If a client sends a valid message with a body of "hello" then the server will
 respond with "world".
 
 If a client sends a valid message containing any text besides "hello"<sup>2</sup> 
-then the server will send an error response.
+then the server will return an error response.
 
 If a client sends an invalid message then the server will ignore the message,
-leaving the connection open to the client.
-
-If the user enters "quit" then the client will send a `bye` message to the server
-and terminate.
+leaving the connection open to the client. Although it might seem sensible to close 
+the connection, this approach was chosen in order to demonstrate default behaviour
+of a state machine, that is, to ignore input.
 
 *1. See formal grammar below for definition of valid request message.*
 
@@ -55,9 +56,6 @@ world-body          = number-1 %s"world"
 ;       Server tells client it sent an invalid message
 rtfm                = signature %d3 reason
 reason              = string
-
-;       Client closes the session
-bye                 = signature %d4
 
 ;       Included for illustration purposes
 valid-request       = signature number-1 [string]
