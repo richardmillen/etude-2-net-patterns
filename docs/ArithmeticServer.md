@@ -16,13 +16,13 @@ Support for a single binary arithmetic operator.
 
 The parts of each expression are sent to the server in stepwise fashion, as follows:
 
-| User Action                       | Client Action | Server Action         |
-| :-------------------------------- | :------------ | :-------------------- |
-| Enters integer constant e.g. `1`  | Sends `1`     |                       |
-| Enters operator e.g. `+`          | Sends `+`     |                       |
-| Enters integer constant e.g. `2`  | Sends `2`     |                       |
-| Waits for result...               |               | Sends result i.e. `3` |
-| Enters another integer and so on. | Sends `...`   |                       |
+| User Action                       | Client Action          | Server Action         |
+| :-------------------------------- | :--------------------- | :-------------------- |
+| Enters integer constant e.g. `1`  | Sends `1`              | Receives operand      |
+| Enters operator e.g. `+`          | Sends `+`              | Receives operator     |
+| Enters integer constant e.g. `2`  | Sends `2`              | Receives operand      |
+| Waits for result...               | Receives/prints result | Sends result i.e. `3` |
+| Enters integer and so on.         | Sends ...              | Receives ...          |
 
 ### Notes
 
