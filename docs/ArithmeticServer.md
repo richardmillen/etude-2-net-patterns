@@ -1,20 +1,30 @@
-# Example 4: Arithmetic Server
-
-This example follows the common client-server architecture.
+# Example 3: Arithmetic Server
 
 The arithmetic client sends a series of basic arithmetical expressions to a remote
 server which returns the result.
 
-Each arithmetical expression is sent piece by piece i.e.
+## Goals
 
-1. operand
-1. operator
-1. operand
+1. More client-server state transitions than in earlier examples.
+1. Simple state synchronisation between client and server.
 
-the server then returns the result.
+## Implementation
 
-this implementation only supports very simple arithmetic operations i.e. n+n, n/n etc.
-where 'n' is a 32-bit float.
+### Overall Behaviour
+
+Support for a single binary arithmetic operator.
+
+The parts of each expression are sent to the server in stepwise fashion, as follows:
+
+| User Action                       | Client Action | Server Action         |
+| :-------------------------------- | :------------ | :-------------------- |
+| Enters integer constant e.g. `1`  | Sends `1`     |                       |
+| Enters operator e.g. `+`          | Sends `+`     |                       |
+| Enters integer constant e.g. `2`  | Sends `2`     |                       |
+| Waits for result...               |               | Sends result i.e. `3` |
+| Enters another integer and so on. | Sends `...`   |                       |
+
+### Notes
 
 n.b. type safety is moot (if not misplaced) at the point where data is passed into the
 Server because validation (and serialisation) would be performed within the Service by
