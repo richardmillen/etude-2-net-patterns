@@ -10,7 +10,6 @@ Each one has an associated a readme which is kind of a mini spec, providing high
 
 1. [Echo Server](docs/EchoServer.md)
 1. [Hello World Server](docs/HelloWorldServer.md)
-1. [State Server](docs/StateServer.md)
 1. [Arithmetic Server](docs/ArithmeticServer.md)
 1. [Timeouts](docs/Timeouts.md)
 
