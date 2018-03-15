@@ -46,16 +46,11 @@ mode may influence both client and server behaviour:
 | Client Mode     | Client Behaviour                                                              | Server Behaviour |
 | :-------------- | :---------------------------------------------------------------------------- | :--------------- |
 | Abort           | On timeout; aborts request and exits.                                         | n/a |
-| Retry           | On timeout; resends request with incremented *Retry Counter*.                 | 
-Server responds to first retry, but not to original request. |
-| Retry Blocked   | Same as *Retry*.                                                              | 
-Server blocks, responding to request after timeout, retries ignored. |
-| Refresh         | On timeout; resends request up to 3 times with *Retry Counter* set to zero 0. | 
-Server replies to each request attempt. |
-| Refresh Blocked | Same as *Refresh*.                                                            | 
-Server blocks, responding to each request attempt. |
-| Backoff         | Same as *Retry*, but *Retry Interval* doubled each time.                      | 
-Server blocks, responding to request after timeout, retries ignored. |
+| Retry           | On timeout; resends request with incremented *Retry Counter*.                 | Server responds to first retry, but not to original request. |
+| Retry Blocked   | Same as *Retry*.                                                              | Server blocks, responding to request after timeout, retries ignored. |
+| Refresh         | On timeout; resends request up to 3 times with *Retry Counter* set to zero 0. | Server replies to each request attempt. |
+| Refresh Blocked | Same as *Refresh*.                                                            | Server blocks, responding to each request attempt. |
+| Backoff         | Same as *Retry*, but *Retry Interval* doubled each time.                      | Server blocks, responding to request after timeout, retries ignored. |
 
 ### States
 
