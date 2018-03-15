@@ -20,12 +20,12 @@ messages without receiving a response from the server.
 
 A client is started with the following command line flags:
 
-| Flag           | Type    | Description                                                              |
-| :------------- | :------ | :----------------------------------------------------------------------- |
-| Sleep          | Integer | *Sleep Duration* value of first request.                                 |
-| Step           | Integer | Number of milliseconds to increment *Sleep* for each subsequent request. |
-| Timeout        | Integer | Number of milliseconds to wait for server to reply.                      |
-| Mode           | String  | Specifies how the client/server should behave.                           |
+| Flag    | Type    | Description                                                              |
+| :------ | :------ | :----------------------------------------------------------------------- |
+| Sleep   | Integer | *Sleep Duration* value of first request.                                 |
+| Step    | Integer | Number of milliseconds to increment *Sleep* for each subsequent request. |
+| Timeout | Integer | Number of milliseconds to wait for server to reply.                      |
+| Mode    | String  | Specifies how the client/server should behave.                           |
 
 A client sends a maximum of 10 new requests to the server before terminating.
 
@@ -38,17 +38,21 @@ Each message sent from the client to the server contains the following parameter
 | Block          | Boolean | If set, the server connection will not receive client requests until the *Sleep Duration* has elapsed. |
 | Sleep Duration | Integer | Number of milliseconds the server should sleep before sending a reply. Ignored by server if *Retry Counter* &ne; 0 (zero). |
 
+*n.b. Each parameter is confined its own byte(s) in order to keep things simple, 
+but it might be desirable to use bit masks on space constrained, or low throughput
+systems.*
+
 The client may be configured to start in various different *modes*, where each
 mode may influence both client and server behaviour:
 
-| Client Mode     | Client Behaviour                                                              | Server Behaviour |
-| :-------------- | :---------------------------------------------------------------------------- | :--------------- |
-| Abort           | On timeout; aborts request and exits.                                         | n/a |
-| Retry           | On timeout; resends request with incremented *Retry Counter*.                 | Server responds to first retry, but not to original request. |
-| Retry Blocked   | Same as *Retry*.                                                              | Server blocks, responding to request after timeout, retries ignored. |
+| Client Mode     | Client Behaviour                                          | Server Behaviour |
+| :-------------- | :-------------------------------------------------------- | :--------------- |
+| Abort           | On timeout; aborts request and exits.                     | n/a |
+| Retry           | On timeout; resends request with incremented *Retry Counter*. | Server responds to first retry, but not to original request. |
+| Retry Blocked   | Same as *Retry*.                                          | Server blocks, responding to request after timeout, retries ignored. |
 | Refresh         | On timeout; resends request with *Retry Counter* set to zero 0. | Server replies to each request attempt. |
-| Refresh Blocked | Same as *Refresh*.                                                            | Server blocks, responding to each request attempt. |
-| Backoff         | Same as *Retry*, but timeout *(retry interval)* doubled each time.            | Server blocks, responding to request after timeout, retries ignored. |
+| Refresh Blocked | Same as *Refresh*.                                        | Server blocks, responding to each request attempt. |
+| Backoff         | Same as *Retry*, but timeout *(retry interval)* doubled each time. | Server blocks, responding to request after timeout, retries ignored. |
 
 ### States
 
@@ -61,7 +65,30 @@ Broadly speaking the client may be configured to run as the following state mach
 The following ABNF grammar defines the protocol:
 
 ```abnf
-...
+;       Traffic consists of requests and replies
+traffic         = *(request / reply)
+
+;       Client request sent to Server
+request         = id retries block sleep
+
+;       Server reply sent to Client
+reply           = id "RDY"
+
+;       Request id (1-10)
+id              = number-1
+
+;       Rolling request retry number (0-255)
+retries         = number-1
+
+;       Blocking flag (single octet)
+block           = BIT
+
+;       Sleep duration
+sleep           = number-2
+
+;       Numbers stored in network byte order
+number-1        = 1OCTET
+number-2        = 2OCTET
 ```
 
 
