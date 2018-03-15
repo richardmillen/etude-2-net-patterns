@@ -33,16 +33,19 @@ The parts of each expression are sent to the server in stepwise fashion, as foll
 The following ABNF grammar defines the protocol:
 
 ```abnf
-;           Integer constant value
+;       Traffic consists of operands, operators, and results
+traffic             = *(operand / operator / result)
+
+;       Integer constant value
 operand             = number-2
 
-;           Arithmetic operators (*+-/)
+;       Arithmetic operators (*+-/)
 operator            = %d42 / %d43 / %d45 / %d47
 
-;           Integer result value
+;       Integer result value
 result              = number-4
 
-;           Numbers stored in network byte order
+;       Numbers stored in network byte order
 number-2            = 2OCTET
 number-4            = 4OCTET
 ```

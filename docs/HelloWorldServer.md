@@ -45,6 +45,9 @@ of a state machine, that is, to ignore input.
 The following ABNF grammar defines the protocol:
 
 ```abnf
+;       Traffic consists of hello, world and rtfm messages
+traffic             = *(hello / world / rtfm)
+
 ;       Client sends valid request
 hello               = signature %d1 hello-body
 hello-body          = number-1 %s"hello"
