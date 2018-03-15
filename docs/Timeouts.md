@@ -8,7 +8,7 @@ timeout *(the precise action is configurable)*.
 ## Goals
 
 1. Explore timeouts using time-based event triggers.
-1. Explore different strategies to timeouts.
+1. Explore some basic strategies for handling timeouts.
 
 ## Implementation
 
