@@ -1,7 +1,7 @@
 # Example 3: Arithmetic Server
 
-The arithmetic client sends a series of basic arithmetical expressions to a remote
-server which returns the result.
+The arithmetic client sends a basic arithmetical expression to a remote server 
+which returns the result.
 
 ## Goals
 
@@ -23,6 +23,33 @@ The parts of each expression are sent to the server in stepwise fashion, as foll
 | Enters integer constant e.g. `2`  | Sends `2`              | Receives operand      |
 | Waits for result...               | Receives/prints result | Sends result i.e. `3` |
 | Enters integer and so on.         | Sends ...              | Receives ...          |
+
+### States
+
+![client/server state diagram](../images/ArithmeticServer-StateDiagram.png)
+
+### Formal Grammar
+
+The following ABNF grammar defines the protocol:
+
+```abnf
+;           Integer constant value
+operand             = number-2
+
+;           Arithmetic operators (*+-/)
+operator            = %d42 / %d43 / %d45 / %d47
+
+;           Integer result value
+result              = number-4
+
+;           Numbers stored in network byte order
+number-2            = 2OCTET
+number-4            = 4OCTET
+```
+
+## Security
+
+All messages are sent between nodes in plain text.
 
 ### Notes
 

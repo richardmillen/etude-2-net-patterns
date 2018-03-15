@@ -66,7 +66,7 @@ signature           = %x48 %x57
 ;       Short printable string with length prefix (max. 255 chars)
 string              = number-1 *VCHAR
 
-;       Number stored in single OCTET
+;       Number stored in single octet
 number-1            = 1OCTET
 ```
 
