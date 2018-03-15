@@ -25,11 +25,9 @@ A client is started with the following command line flags:
 | Sleep          | Integer | *Sleep Duration* value of first request.                                 |
 | Step           | Integer | Number of milliseconds to increment *Sleep* for each subsequent request. |
 | Timeout        | Integer | Number of milliseconds to wait for server to reply.                      |
-| Retry Interval | Integer | Number of milliseconds between each retry attempt.                       |
 | Mode           | String  | Specifies how the client/server should behave.                           |
 
-A client sends a maximum of 10 new requests (excluding retries etc) to the server
-before terminating.
+A client sends a maximum of 10 new requests to the server before terminating.
 
 Each message sent from the client to the server contains the following parameters:
 
@@ -50,11 +48,13 @@ mode may influence both client and server behaviour:
 | Retry Blocked   | Same as *Retry*.                                                              | Server blocks, responding to request after timeout, retries ignored. |
 | Refresh         | On timeout; resends request with *Retry Counter* set to zero 0. | Server replies to each request attempt. |
 | Refresh Blocked | Same as *Refresh*.                                                            | Server blocks, responding to each request attempt. |
-| Backoff         | Same as *Retry*, but *Retry Interval* doubled each time.                      | Server blocks, responding to request after timeout, retries ignored. |
+| Backoff         | Same as *Retry*, but timeout *(retry interval)* doubled each time.            | Server blocks, responding to request after timeout, retries ignored. |
 
 ### States
 
-![client and server states](../images/Timeouts-StateDiagrams.png)
+Broadly speaking the client may be configured to run as the following state machines:
+
+![client state machines](../images/Timeouts-ClientStateDiagrams.png)
 
 ### Formal Grammar
 
