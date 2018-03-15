@@ -37,8 +37,7 @@ Each message sent from the client to the server contains the following parameter
 | :------------- | :------ | :---------------------------------------------------------- |
 | Id             | Integer | Starts at 1, incremented for each successful request/reply. |
 | Retry Counter  | Integer | Set to 0 (zero) for new requests and incremented per retry. |
-| Block          | Boolean | If set, the server connection will not receive client 
-requests until the *Sleep Duration* has elapsed. |
+| Block          | Boolean | If set, the server connection will not receive client requests until the *Sleep Duration* has elapsed. |
 | Sleep Duration | Integer | Number of milliseconds the server should sleep before sending a reply. Ignored by server if *Retry Counter* &ne; 0 (zero). |
 
 The client may be configured to start in various different *modes*, where each
