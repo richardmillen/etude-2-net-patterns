@@ -54,7 +54,7 @@ mode may influence both client and server behaviour:
 | Resend Blocked | Same as *Refresh*.                                         | Server blocks, responding to each request attempt. |
 | Backoff        | Same as *Retry*, but timeout *(retry interval)* doubled each time. | Server blocks, responding to request after timeout, retries ignored. |
 
-### States
+### Client States
 
 Broadly speaking the client may be configured to run as 3 different state machines:
 
@@ -64,7 +64,9 @@ Broadly speaking the client may be configured to run as 3 different state machin
 
 !['resending client' state machine](../images/Timeouts-ResendingClientStateDiagram.png)
 
+### Server States
 
+![incomplete server state machine](../images/Timeouts-IncompleteServerStateDiagram.png)
 
 ### Formal Grammar
 
