@@ -45,20 +45,26 @@ systems.*
 The client may be configured to start in various different *modes*, where each
 mode may influence both client and server behaviour:
 
-| Client Mode     | Client Behaviour                                          | Server Behaviour |
-| :-------------- | :-------------------------------------------------------- | :--------------- |
-| Abort           | On timeout; aborts request and exits.                     | n/a |
-| Retry           | On timeout; resends request with incremented *Retry Counter*. | Server responds to first retry, but not to original request. |
-| Retry Blocked   | Same as *Retry*.                                          | Server blocks, responding to request after timeout, retries ignored. |
-| Refresh         | On timeout; resends request with *Retry Counter* set to zero 0. | Server replies to each request attempt. |
-| Refresh Blocked | Same as *Refresh*.                                        | Server blocks, responding to each request attempt. |
-| Backoff         | Same as *Retry*, but timeout *(retry interval)* doubled each time. | Server blocks, responding to request after timeout, retries ignored. |
+| Client Mode    | Client Behaviour                                           | Server Behaviour |
+| :------------- | :--------------------------------------------------------- | :--------------- |
+| Abort          | On timeout; aborts request and exits.                      | n/a |
+| Retry          | On timeout; resends request with incremented *Retry Counter*. | Server responds to first retry, but not to original request. |
+| Retry Blocked  | Same as *Retry*.                                           | Server blocks, responding to request after timeout, retries ignored. |
+| Resend         | On timeout; resends request with *Retry Counter* set to zero 0. | Server replies to each request attempt. |
+| Resend Blocked | Same as *Refresh*.                                         | Server blocks, responding to each request attempt. |
+| Backoff        | Same as *Retry*, but timeout *(retry interval)* doubled each time. | Server blocks, responding to request after timeout, retries ignored. |
 
 ### States
 
-Broadly speaking the client may be configured to run as the following state machines:
+Broadly speaking the client may be configured to run as 3 different state machines:
 
-![client state machines](../images/Timeouts-ClientStateDiagrams.png)
+!['aborting client' state machine](../images/Timeouts-AbortingClientStateDiagram.png)
+
+!['retrying client' state machine](../images/Timeouts-RetryingClientStateDiagram.png)
+
+!['resending client' state machine](../images/Timeouts-ResendingClientStateDiagram.png)
+
+
 
 ### Formal Grammar
 
@@ -72,7 +78,7 @@ traffic         = *(request / reply)
 request         = id retries block sleep
 
 ;       Server reply sent to Client
-reply           = id "RDY"
+reply           = id retries "RDY"
 
 ;       Request id (1-10)
 id              = number-1
