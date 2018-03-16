@@ -1,4 +1,4 @@
-# Example ?: Upgradable Server
+# Upgradable Server Example
 
 Explores live upgrades of server.
 

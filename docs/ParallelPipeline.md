@@ -1,4 +1,4 @@
-# Example 16: Parallel Pipeline
+# Parallel Pipeline Example
 
 Ventilator, workers, sink.
 

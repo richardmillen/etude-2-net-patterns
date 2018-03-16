@@ -1,4 +1,4 @@
-# Example ?: Discovery Beacon
+# Discovery Beacon Example
 
 Service discovery via UDP beacons.
 

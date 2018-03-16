@@ -1,4 +1,4 @@
-# Example 8: Discovery (Service Lookup) Broker
+# Discovery (Service Lookup) Broker Example
 
 
 

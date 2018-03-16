@@ -1,4 +1,4 @@
-# Example 20: Paxos
+# Paxos Implementation Example
 
 
 

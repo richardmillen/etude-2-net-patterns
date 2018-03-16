@@ -1,4 +1,4 @@
-# Example 3: Arithmetic Server
+# Arithmetic Server Example
 
 The arithmetic client sends a basic arithmetical expression to a remote server 
 which returns the result.

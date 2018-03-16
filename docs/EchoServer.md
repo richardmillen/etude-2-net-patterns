@@ -1,4 +1,4 @@
-# Example 1: Echo Server
+# Echo Server Example
 
 Simple example where one or more client applications send a simple message which is echoed back by a remote server.
 

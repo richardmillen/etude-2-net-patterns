@@ -1,4 +1,4 @@
-# Example 2: Hello World Server
+# Hello World Example
 
 Simple Hello World client-server example, where a client sends "hello" and receives a response "world". 
 

@@ -1,4 +1,4 @@
-# Example 7: Clone Server
+# Clone Server Example
 
 The clone server is a simple echo server, but with some important differences.
 

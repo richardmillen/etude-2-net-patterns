@@ -1,4 +1,4 @@
-# Example ?: Peer-to-Peer Parallel Pipeline
+# Peer-to-Peer Parallel Pipeline Example
 
 
 

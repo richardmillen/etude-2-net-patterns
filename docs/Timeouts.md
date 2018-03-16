@@ -1,4 +1,4 @@
-# Example 4: Timeouts
+# Timeouts Example
 
 A client app sends a numeric value to a server, the server then sleeps for the
 specified amount of time before replying. The client may timeout while waiting
