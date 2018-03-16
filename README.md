@@ -12,10 +12,30 @@ Each one has an associated a readme which is kind of a mini spec, providing high
 1. [Hello World Server](docs/HelloWorldServer.md)
 1. [Arithmetic Server](docs/ArithmeticServer.md)
 1. [Timeouts](docs/Timeouts.md)
+1. [Name Lookup Server](docs/NameServer.md)
+1. [Pipelining](docs/Pipelining.md)
+1. [Clone Server](docs/CloneServer.md)
+1. [Discovery (Service Lookup) Broker](docs/DiscoveryBroker.md)
+1. [Service Broker](docs/ServiceBroker.md)
+1. [Random Word Publisher](docs/RandomWordPublisher.md)
+1. [Distributed Tracing](docs/DistributedTracing.md)
+1. [Parallel Pipeline](docs/ParallelPipeline.md)
+1. [Discovery Beacon](docs/DiscoveryBeacon.md)
+1. [Discovery by Survey](docs/DiscoveryBySurvey.md)
+1. [Transport Bridge](docs/TransportBridge.md)
+1. [Upgradable Server](docs/UpgradeServer.md)
+1. [Peer-to-peer Parallel Pipeline](docs/P2PParallelPipeline.md)
 
 ## Demos
 
-The demo folder contains reasonably complete apps & simulations. Each one comes with its own readme much like the examples.
+The demo folder contains reasonably complete apps & simulations.
+
+1. ATM
+1. Daemons
+1. P2P Chat
+1. Traffic Lights
+1. TV Remote
+1. Vending Machine
 
 ## Notes on Versions
 

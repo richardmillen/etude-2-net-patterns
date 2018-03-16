@@ -1,4 +1,4 @@
-# Example 7: Transport Bridge
+# Example ?: Transport Bridge
 
 *external* client, proxy *(bridge)* server, *internal* server.
 
