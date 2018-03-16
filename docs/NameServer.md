@@ -1,7 +1,7 @@
-# Example 5: Name Lookup Server
+# Name Lookup Server Example
 
 Clients contact a central service lookup which returns address information for 
-any running instances. The client then contacts the desired service directly.
+the registered instance. The client then contacts the desired service directly.
 
 ## Goals
 
@@ -24,15 +24,22 @@ on *test* and so forth.
 
 ### States
 
-
+![client and server state diagrams](../images/NameServerStateDiagrams.png)
 
 ### Formal Grammar
 
+The following ABNF grammar defines the protocol:
 
+```abnf
 
+```
 
+## Limitations
 
+Only a single instance of a service may register itself or the previously registered 
+instance will be overwritten.
 
+## Security
 
-
+All messages are sent between nodes in plain text.
 

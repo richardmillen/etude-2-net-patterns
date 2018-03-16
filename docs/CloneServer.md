@@ -1,6 +1,19 @@
 # Clone Server Example
 
-The clone server is a simple echo server, but with some important differences.
+The clone server is an extension to the [Echo Server](EchoServer.md) example,
+where multiple server instances exist providing redundancy where all but one
+instance becomes unavailable.
+
+## Goals
+
+To explore the following problems:
+
++ Service availability.
++ Service discovery.
+
+## Implementation
+
+### Overall Behaviour
 
 The server app may be started as a **Helper**, where the address of a peer server
 instance is specified via the commandline flag `--tbc`.
@@ -23,9 +36,7 @@ The list of *active* servers is returned directly, or indirectly by a **Primary 
 is sorted by server *liveness* (how active the servers are) and hence resembles a 
 priority queue.
 
-## Modeling / Notes
-
-### Start Server
+#### Start Server
 
 + have peer address?
     - send `HERETOHELP` (inc. *this* server address)
@@ -44,7 +55,7 @@ priority queue.
     - receive `ECHO`
         - send `ECHO`
 
-### Refresh Lookup List
+#### Refresh Lookup List
 
 + wait (based on *liveness* of **Active Lookup** server; exponential back-off)
 + start refresh
@@ -55,9 +66,22 @@ priority queue.
         - update server *liveness*
         - go to 'start refresh'
 
+### States
+
+![client and server state diagrams](../images/CloneServerStateDiagrams.png)
+
+### Formal Grammar
+
+The following ABNF grammar defines the protocol:
+
+```abnf
+```
+
+## Limitations
 
 
 
+## Security
 
-
+All messages are sent between nodes in plain text.
 
