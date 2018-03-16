@@ -1,4 +1,4 @@
-# Example 13: Service Broker
+# Example 9: Service Broker
 
 ## Broker
 

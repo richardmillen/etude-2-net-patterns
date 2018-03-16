@@ -1,4 +1,4 @@
-# Example 9: Pipelining
+# Example 6: Pipelining
 
 ## Client
 

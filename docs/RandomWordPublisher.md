@@ -1,4 +1,4 @@
-# Example 14: Random Word Publisher
+# Example 10: Random Word Publisher
 
 ## Publisher
 
