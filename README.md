@@ -1,12 +1,16 @@
 # Étude 2 - Networking Patterns
 
-A study of networking patterns over TCP & UDP, with implementations in Go & *(eventually)* C++.
+A study of networking patterns over TCP & UDP, with implementations in Go 
+*(and eventually other languages inc. C++)*.
 
 ## Examples
 
-The examples start small & simple, increasing in size & complexity. They aren't intended to be useful applications, but explore one or more aspects of distributed computing.
+The examples start small & simple, increasing in size & complexity. They aren't 
+intended to be useful applications, but explore one or more aspects of distributed 
+computing.
 
-Each one has an associated a readme which is kind of a mini spec, providing high-level information and low-level protocol details.
+Each one has an associated markdown file *(in the 'docs' folder)* which is kind 
+of a mini spec, providing high-level information and low-level protocol details.
 
 1. [Echo Server](docs/EchoServer.md)
 1. [Hello World Server](docs/HelloWorldServer.md)
@@ -41,12 +45,15 @@ The demo folder contains reasonably complete apps & simulations.
 
 ### v0.1
 
-*n.b. Having had a degree of success with my initial investigations, I didn't like the direction it was
-heading. I needed to make substantive changes to the supporting packages, so to avoid the overhead of working through the technical debt, I opted to start over.*
+*n.b. Having had a degree of success with my initial investigations, I didn't 
+like the direction it was heading. I needed to make substantive changes to the 
+supporting packages, so to avoid the overhead of working through the technical 
+debt, I opted to start over.*
 
 ### v0.2
 
-For this version I've elected to go with a more state-centric design for a number of reasons:
+For this version I've elected to go with a more state-centric design for a number 
+of reasons:
 
 + self-documenting protocol; define states that accept defined inputs etc.
 + it should help promote a more declarative style
@@ -153,7 +160,8 @@ Contains all the networking types. Built upon types in the `fsm` package.
 + environments; dev, test, prod etc.
 + async; batch send
 
-*n.b. can interconnect & failover be the same i.e. peer broker becomes clone during downtime?*
+*n.b. can interconnect & failover be the same i.e. peer broker becomes clone 
+during downtime?*
 
 ### Disconnected / Offline Service
 
@@ -275,7 +283,13 @@ Here's a list of the more relevant sections from the guide containing code sampl
 1. [Designing the API](http://zguide.zeromq.org/page:all#Designing-the-API)
 1. [Dealing with Blocked Peers](http://zguide.zeromq.org/page:all#Dealing-with-Blocked-Peers)
 
-*I implemented many of the examples above (in C++) as a learning exercise. Although my implementations are 'experimental' in nature and therefore quite *raw*, some of them do resolve issues that I found when trying to run the 'official' examples. Also, each example is self-contained i.e. no external dependencies besides ZeroMQ itself. This should make it easier to understand the code, in contrast with the examples in the zguide which use a collection of opaque helper functions.*
+*I implemented many of the examples above (in C++) as a learning exercise.*
+*Although my implementations are 'experimental' in nature and therefore quite*
+*raw, some of them do resolve issues that I found when trying to run the 'official'*
+*examples. Also, each example is self-contained i.e. no external dependencies*
+*besides ZeroMQ itself. This should make it easier to understand the code, in*
+*contrast with the examples in the zguide which use a collection of opaque helper*
+*functions.*
 
 *You can find my zguide examples [here](https://github.com/richardmillen/zguide-examples).*
 
