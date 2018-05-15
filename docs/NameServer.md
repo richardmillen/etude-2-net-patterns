@@ -39,6 +39,9 @@ What data uniquely identifies a service?
 + End point address e.g. *192.168.1.1*
 + End point port e.g. *5678*
 
+> TODO: Consider the pros & cons of having no unique per-instance identifier.
+
+> TODO: Consider the pros & cons of a unique per-instance identifier provided by a) the lookup service and b) the registering service.
 
 ### States
 
